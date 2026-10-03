@@ -164,7 +164,7 @@
         </div>
         <div>
           <button onclick="payQRIS()" class="btn-buy"><i class="fa-solid fa-qrcode"></i> Bayar Sekarang (QRIS)</button>
-          <button onclick="orderWA()" class="btn-order-wa"><i class="fa-brands fa-whatsapp"></i> Chat WhatsApp Palugada Shop30</button>
+          <button onclick="orderWA()" class="btn-order-wa"><i class="fa-brands fa-whatsapp"></i> Chat WhatsApp Admin</button>
         </div>
       </div>
     </div>
@@ -186,7 +186,7 @@
         <!-- Input File Gambar -->
         <div class="form-group">
           <label class="form-label">Upload Foto Produk:</label>
-          <input type="file" id="adminProdImgFile" accept="image/*" class="form-file" onchange="compressAndPreviewImage(event)" />
+          <input type="file" id="adminProdImgFile" accept="image/*" class="form-file" onchange="compressAndPreviewImage(event, 'adminProdImgBase64', 'imgPreview')" />
           <input type="hidden" id="adminProdImgBase64" />
           <img id="imgPreview" src="" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; border: 1px solid #ccc;" />
         </div>
@@ -235,13 +235,22 @@
         <button onclick="saveAdminUI()" class="btn-admin" style="width: 100%; justify-content: center; background: #b45309;">Simpan Tampilan</button>
       </div>
 
-      <!-- BAGIAN 3: PENGATURAN WHATSAPP -->
+      <!-- BAGIAN 3: PENGATURAN WHATSAPP & QRIS -->
       <div style="padding-top: 16px; border-top: 1px dashed #d6d3d1;">
-        <div class="admin-section-title"><i class="fa-brands fa-whatsapp"></i> Nomor WhatsApp Toko</div>
+        <div class="admin-section-title"><i class="fa-brands fa-whatsapp"></i> Nomor WhatsApp & <i class="fa-solid fa-qrcode"></i> QRIS Toko</div>
+        
         <div class="form-group">
+            <label class="form-label">Upload Foto QRIS Pembayaran:</label>
+            <input type="file" id="adminQrisImgFile" accept="image/*" class="form-file" onchange="compressAndPreviewImage(event, 'adminQrisImgBase64', 'qrisPreview')" />
+            <input type="hidden" id="adminQrisImgBase64" />
+            <img id="qrisPreview" src="" style="width: 120px; height: 120px; object-fit: contain; border-radius: 8px; margin-top: 8px; display: none; border: 1px solid #ccc; background: white; padding: 4px;" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nomor WhatsApp Admin (awalan 62):</label>
           <input type="text" id="adminSettingWA" class="form-input" placeholder="6281234567890" />
         </div>
-        <button onclick="saveAdminSetting()" class="btn-admin" style="width: 100%; justify-content: center; background: #292524;">Simpan Nomor WA</button>
+        <button onclick="saveAdminSetting()" class="btn-admin" style="width: 100%; justify-content: center; background: #292524;">Simpan WA & QRIS</button>
       </div>
     </div>
   </div>
@@ -268,6 +277,8 @@
     let uiSettings = JSON.parse(localStorage.getItem('palugada_ui')) || INITIAL_UI;
     let storeWA = localStorage.getItem('palugada_store_wa') || '6281234567890';
     let adminPin = localStorage.getItem('palugada_admin_pin') || '1234';
+    // Gunakan dummy qris jika belum upload
+    let storeQris = localStorage.getItem('palugada_store_qris') || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=PalugadaShop30-Belum-Ada-QRIS';
 
     let selectedItem = null;
     let discount = 0;
@@ -347,16 +358,15 @@
       if (!wa) return notify('Masukkan nomor WhatsApp Anda!');
       const total = Math.max(0, selectedItem.price - discount);
       
-      const qrisUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=PalugadaShop30-Tagihan-${formatRp(total)}`;
       const w = window.open('', '_blank');
       w.document.write(`
         <body style="font-family: sans-serif; text-align: center; padding: 40px; background: #fafaf9;">
           <h2>Invoice Palugada Shop30</h2>
           <p>Total Bayar: <strong style="color: #78350f; font-size: 20px;">${formatRp(total)}</strong></p>
           <p style="color: #555; margin-bottom: 10px;">Produk: ${selectedItem.title}</p>
-          <img src="${qrisUrl}" style="margin: 20px auto; border: 1px solid #ccc; padding: 12px; border-radius: 12px; background: #fff;" />
+          <img src="${storeQris}" style="margin: 20px auto; border: 1px solid #ccc; padding: 12px; border-radius: 12px; background: #fff; max-width: 300px;" />
           <br><br>
-          <a href="https://wa.me/${storeWA}?text=${encodeURIComponent('Halo Palugada Shop30, saya sudah bayar via QRIS pesanan: ' + selectedItem.title + ' (Total: ' + formatRp(total) + ')')}" style="background: #059669; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Konfirmasi Pembayaran ke WA</a>
+          <a href="https://wa.me/${storeWA}?text=${encodeURIComponent('Halo Palugada Shop30, saya sudah transfer via QRIS untuk pesanan: ' + selectedItem.title + ' (Total: ' + formatRp(total) + ')')}" style="background: #059669; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Konfirmasi Pembayaran ke WA</a>
         </body>
       `);
     }
@@ -376,8 +386,11 @@
     function openAdmin() {
       const pin = prompt('Masukkan PIN Admin (Bawaan: 1234):');
       if (pin === adminPin) {
-        // Isi Form WA
+        // Isi Form WA & QRIS
         document.getElementById('adminSettingWA').value = storeWA;
+        document.getElementById('qrisPreview').src = storeQris;
+        document.getElementById('qrisPreview').style.display = 'block';
+        document.getElementById('adminQrisImgBase64').value = storeQris; // Tetap simpan qris yg ada jika tak diubah
         
         // Isi Form UI
         document.getElementById('adminUiPromo').value = uiSettings.promo;
@@ -415,8 +428,8 @@
       `).join('');
     }
 
-    // FUNGSI KOMPRES FOTO DARI HP (Agar LocalStorage Tidak Penuh)
-    function compressAndPreviewImage(event) {
+    // FUNGSI KOMPRES FOTO DARI HP (Diperbarui agar bisa dipakai untuk QRIS juga)
+    function compressAndPreviewImage(event, base64InputId, previewImgId) {
       const file = event.target.files[0];
       if (!file) return;
 
@@ -426,8 +439,13 @@
         img.onload = function() {
           const canvas = document.createElement('canvas');
           const MAX_WIDTH = 400; // Resize lebar maks 400px
-          const scaleSize = MAX_WIDTH / img.width;
-          canvas.width = MAX_WIDTH;
+          let scaleSize = 1;
+          
+          if (img.width > MAX_WIDTH) {
+              scaleSize = MAX_WIDTH / img.width;
+          }
+          
+          canvas.width = img.width * scaleSize;
           canvas.height = img.height * scaleSize;
 
           const ctx = canvas.getContext('2d');
@@ -436,9 +454,9 @@
           // Ubah ke base64 dengan kompresi 70% (kualitas tetap bagus untuk web)
           const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
           
-          document.getElementById('adminProdImgBase64').value = dataUrl;
-          document.getElementById('imgPreview').src = dataUrl;
-          document.getElementById('imgPreview').style.display = 'block';
+          document.getElementById(base64InputId).value = dataUrl;
+          document.getElementById(previewImgId).src = dataUrl;
+          document.getElementById(previewImgId).style.display = 'block';
         }
         img.src = e.target.result;
       }
@@ -529,9 +547,17 @@
 
     function saveAdminSetting() {
       storeWA = document.getElementById('adminSettingWA').value.trim();
+      
+      let qrisUpload = document.getElementById('adminQrisImgBase64').value;
+      if(qrisUpload) {
+          storeQris = qrisUpload;
+      }
+      
       localStorage.setItem('palugada_store_wa', storeWA);
+      localStorage.setItem('palugada_store_qris', storeQris);
+      
       document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;
-      notify('Nomor WhatsApp Toko berhasil diperbarui!');
+      notify('Nomor WA & QRIS berhasil diperbarui!');
     }
 
     function notify(text) {

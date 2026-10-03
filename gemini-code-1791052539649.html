@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Palugada Shop30 - Voucher & Topup Hemat</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f5f5f4; color: #292524; }
+    a { text-decoration: none; color: inherit; }
+
+    /* Top Bar */
+    .topbar { background: #2b1002; color: #fde68a; font-size: 12px; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .badge-promo { background: #dc2626; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+    
+    /* Header */
+    header { background: #ffffff; border-bottom: 1px solid #e7e5e4; position: sticky; top: 0; z-index: 40; }
+    .nav-container { max-width: 1100px; margin: auto; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .logo-box { display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #78350f, #d97706); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; }
+    .btn-admin { background: #1c1917; color: #fef08a; font-size: 12px; font-weight: bold; padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .btn-wa { background: #059669; color: #fff; font-size: 12px; font-weight: bold; padding: 8px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
+
+    /* Hero */
+    .hero { background: linear-gradient(180deg, #2b1002, #451a03); color: #fff; padding: 40px 16px; }
+    .hero-container { max-width: 1100px; margin: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px; }
+    .hero-title { font-size: 32px; font-weight: 800; line-height: 1.2; margin: 12px 0; }
+    .hero-title span { color: #f59e0b; }
+    .hero-sub { color: #d6d3d1; font-size: 14px; max-width: 500px; line-height: 1.6; }
+
+    /* Main Container */
+    .container { max-width: 1100px; margin: auto; padding: 30px 16px; }
+    .cat-bar { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 20px; }
+    .cat-btn { background: #fff; border: 1px solid #d6d3d1; border-radius: 20px; padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .cat-btn.active { background: #451a03; color: #fff; border-color: #451a03; }
+
+    /* Product Grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .card { background: #fff; border: 1px solid #e7e5e4; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; transition: 0.2s; }
+    .card:hover { border-color: #d97706; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .card.selected { border-color: #78350f; box-shadow: 0 0 0 2px #78350f; }
+    .card-img { width: 100%; height: 130px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; background: #f5f5f4; }
+    .card-title { font-size: 13px; font-weight: 700; color: #1c1917; margin-bottom: 4px; }
+    .card-desc { font-size: 11px; color: #78716c; line-height: 1.4; margin-bottom: 10px; }
+    .card-price { font-size: 14px; font-weight: 800; color: #78350f; }
+    .card-coret { font-size: 11px; color: #a8a29e; text-decoration: line-through; }
+
+    /* Checkout Area */
+    .checkout-box { background: #fff; border-radius: 16px; border: 1px solid #e7e5e4; padding: 24px; margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 768px) { .checkout-box { grid-template-columns: 1fr; } }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; }
+    .form-input { width: 100%; padding: 10px 12px; border: 1px solid #d6d3d1; border-radius: 10px; font-size: 12px; }
+    .form-file { width: 100%; padding: 8px; border: 1px dashed #d6d3d1; border-radius: 10px; font-size: 11px; background: #fafaf9; cursor: pointer; }
+    .btn-buy { width: 100%; padding: 12px; background: #78350f; color: #fff; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; }
+    .btn-order-wa { width: 100%; padding: 10px; background: #059669; color: #fff; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; font-size: 12px; margin-top: 8px; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal-card { background: #fff; border-radius: 20px; padding: 24px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .modal-card table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+    .modal-card th, .modal-card td { padding: 8px; border-bottom: 1px solid #e7e5e4; text-align: left; }
+
+    /* Toast */
+    #toast { position: fixed; bottom: 20px; right: 20px; background: #1c1917; color: #fff; font-size: 12px; padding: 10px 16px; border-radius: 8px; display: none; z-index: 60; }
+    
+    /* Section Title */
+    .admin-section-title { font-size: 13px; font-weight: bold; margin-bottom: 10px; color: #78350f; border-bottom: 2px solid #fde68a; padding-bottom: 4px; display: inline-block;}
+  </style>
+</head>
+<body>
+
+  <!-- TOP RUNNING TEXT -->
+  <div class="topbar">
+    <div id="uiPromoText"><span class="badge-promo">PROMO</span> Diskon Hemat Kopi Kenangan & Voucher Digital di Palugada Shop30! Kode: <strong>KOPKENHEMAT</strong></div>
+    <div><i class="fa-solid fa-clock"></i> Buka 24 Jam Non-Stop</div>
+  </div>
+
+  <!-- HEADER / NAVBAR -->
+  <header>
+    <div class="nav-container">
+      <div class="logo-box">
+        <div class="logo-icon"><i class="fa-solid fa-store"></i></div>
+        <div>
+          <h1 id="brandName" style="font-size: 16px; font-weight: 800;">Palugada Shop30</h1>
+          <p style="font-size: 10px; color: #78716c;">Voucher Kopi Kenangan & Serba Ada</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a id="btnNavWA" href="https://wa.me/6281234567890" target="_blank" class="btn-wa"><i class="fa-brands fa-whatsapp"></i> CS WhatsApp</a>
+        <button onclick="openAdmin()" class="btn-admin"><i class="fa-solid fa-lock"></i> Admin</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER HERO -->
+  <section class="hero">
+    <div class="hero-container">
+      <div>
+        <h2 class="hero-title" id="uiHeroTitle">Selamat Datang di<br><span>Palugada Shop30</span></h2>
+        <p class="hero-sub" id="uiHeroSub">Pusat voucher Kopi Kenangan, Fore, Point Coffee, dan aneka voucher digital dengan harga teman paling hemat. Pesanan cepat dan diproses kilat ke WhatsApp!</p>
+      </div>
+      <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 12px; font-size: 12px; max-width: 320px;">
+        <p style="font-weight: bold; color: #fde68a; margin-bottom: 6px;">Keunggulan Palugada Shop30:</p>
+        <p>✅ 100% Legal & Berlaku di Aplikasi Resmi</p>
+        <p>✅ Kupon Bisa Ditumpuk Promo Aplikasi</p>
+        <p>✅ Bebas Biaya Admin via QRIS & E-Wallet</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- KATALOG PRODUK -->
+  <main class="container">
+    <div class="cat-bar">
+      <button onclick="filterCat('all', this)" class="cat-btn active">Semua Menu</button>
+      <button onclick="filterCat('kopken', this)" class="cat-btn">☕ Kopi Kenangan</button>
+      <button onclick="filterCat('fnb', this)" class="cat-btn">🍔 FnB & Roti</button>
+      <button onclick="filterCat('digital', this)" class="cat-btn">📱 Voucher Lainnya</button>
+    </div>
+
+    <div id="productGrid" class="grid"></div>
+
+    <!-- FORMULIR KASIR / CHECKOUT -->
+    <div id="checkoutBox" class="checkout-box">
+      <div>
+        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px;"><i class="fa-solid fa-cart-shopping"></i> Formulir Pembelian</h3>
+        <div class="form-group">
+          <label class="form-label">Produk Terpilih:</label>
+          <input type="text" id="selectedTitle" readonly placeholder="Silakan klik voucher di atas..." class="form-input" style="background: #f5f5f4;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nomor WhatsApp Penerima:</label>
+          <input type="tel" id="buyerWA" placeholder="Cth: 081234567890" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Metode Pembayaran:</label>
+          <select id="payMethod" class="form-input">
+            <option value="QRIS">QRIS (OVO, DANA, GoPay, ShopeePay, Semua Bank)</option>
+            <option value="DANA">DANA</option>
+            <option value="GoPay">GoPay</option>
+            <option value="BCA">Transfer Bank BCA</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="background: #f5f5f4; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <h4 style="font-size: 12px; font-weight: bold; margin-bottom: 12px; text-transform: uppercase;">Kupon Potongan</h4>
+          <div style="display: flex; gap: 6px; margin-bottom: 16px;">
+            <input type="text" id="couponCode" placeholder="Kode Promo (KOPKENHEMAT)" class="form-input" />
+            <button onclick="applyCoupon()" style="padding: 0 16px; border-radius: 8px; border: none; background: #292524; color: #fff; cursor: pointer; font-size: 12px; font-weight: bold;">Klaim</button>
+          </div>
+          <div style="font-size: 12px; line-height: 2;">
+            <div style="display: flex; justify-content: space-between;"><span>Harga:</span><span id="priceOriginal">Rp 0</span></div>
+            <div style="display: flex; justify-content: space-between; color: #059669;"><span>Diskon:</span><span id="priceDiscount">- Rp 0</span></div>
+            <hr style="margin: 8px 0; border: none; border-top: 1px solid #d6d3d1;">
+            <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; color: #78350f;">
+              <span>Total Bayar:</span><span id="priceTotal">Rp 0</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <button onclick="payQRIS()" class="btn-buy"><i class="fa-solid fa-qrcode"></i> Bayar Sekarang (QRIS)</button>
+          <button onclick="orderWA()" class="btn-order-wa"><i class="fa-brands fa-whatsapp"></i> Chat WhatsApp Admin</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL ADMIN KHUSUS ANDA -->
+  <div id="adminModal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 16px; font-weight: 800;"><i class="fa-solid fa-screwdriver-wrench"></i> Admin Palugada Shop30</h3>
+        <button onclick="closeAdmin()" style="border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
+      </div>
+
+      <!-- BAGIAN 1: KELOLA PRODUK -->
+      <div style="margin-bottom: 24px;">
+        <div class="admin-section-title"><i class="fa-solid fa-box"></i> Kelola Produk & Gambar</div>
+        <input type="hidden" id="adminProdId" />
+        
+        <!-- Input File Gambar -->
+        <div class="form-group">
+          <label class="form-label">Upload Foto Produk:</label>
+          <input type="file" id="adminProdImgFile" accept="image/*" class="form-file" onchange="compressAndPreviewImage(event, 'adminProdImgBase64', 'imgPreview')" />
+          <input type="hidden" id="adminProdImgBase64" />
+          <img id="imgPreview" src="" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; border: 1px solid #ccc;" />
+        </div>
+
+        <div class="form-group"><input type="text" id="adminProdName" placeholder="Nama Voucher / Produk" class="form-input" /></div>
+        <div class="form-group">
+          <select id="adminProdCat" class="form-input">
+            <option value="kopken">Kopi Kenangan</option>
+            <option value="fnb">FnB & Roti</option>
+            <option value="digital">Voucher Lainnya</option>
+          </select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="form-group"><input type="number" id="adminProdPrice" placeholder="Harga Jual (Rp)" class="form-input" /></div>
+          <div class="form-group"><input type="number" id="adminProdOrigPrice" placeholder="Harga Coret (Rp)" class="form-input" /></div>
+        </div>
+        <div class="form-group"><input type="text" id="adminProdDesc" placeholder="Keterangan singkat produk" class="form-input" /></div>
+        
+        <button onclick="saveAdminProduct()" class="btn-buy" style="background: #059669; padding: 10px;">Simpan Produk</button>
+      </div>
+
+      <div style="margin-bottom: 24px; max-height: 150px; overflow-y: auto; border: 1px solid #e7e5e4; border-radius: 8px;">
+        <table style="margin-top: 0;">
+          <thead style="background: #f5f5f4; position: sticky; top: 0;">
+            <tr><th>Produk</th><th>Harga</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="adminTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- BAGIAN 2: PENGATURAN TAMPILAN (UI) -->
+      <div style="margin-bottom: 24px; padding-top: 16px; border-top: 1px dashed #d6d3d1;">
+        <div class="admin-section-title"><i class="fa-solid fa-paintbrush"></i> Edit Tampilan Web</div>
+        <div class="form-group">
+          <label class="form-label">Teks Promo (Paling Atas):</label>
+          <input type="text" id="adminUiPromo" class="form-input" placeholder="Teks baris promo..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Judul Utama (Gunakan &lt;span&gt; untuk warna beda):</label>
+          <input type="text" id="adminUiTitle" class="form-input" placeholder="Contoh: Selamat Datang di <span>Toko</span>" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Teks Deskripsi / Sub Judul:</label>
+          <textarea id="adminUiSub" class="form-input" rows="3" placeholder="Deskripsi toko..."></textarea>
+        </div>
+        <button onclick="saveAdminUI()" class="btn-admin" style="width: 100%; justify-content: center; background: #b45309;">Simpan Tampilan</button>
+      </div>
+
+      <!-- BAGIAN 3: PENGATURAN WHATSAPP & QRIS -->
+      <div style="padding-top: 16px; border-top: 1px dashed #d6d3d1;">
+        <div class="admin-section-title"><i class="fa-brands fa-whatsapp"></i> Nomor WhatsApp & <i class="fa-solid fa-qrcode"></i> QRIS Toko</div>
+        
+        <div class="form-group">
+            <label class="form-label">Upload Foto QRIS Pembayaran:</label>
+            <input type="file" id="adminQrisImgFile" accept="image/*" class="form-file" onchange="compressAndPreviewImage(event, 'adminQrisImgBase64', 'qrisPreview')" />
+            <input type="hidden" id="adminQrisImgBase64" />
+            <img id="qrisPreview" src="" style="width: 120px; height: 120px; object-fit: contain; border-radius: 8px; margin-top: 8px; display: none; border: 1px solid #ccc; background: white; padding: 4px;" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nomor WhatsApp Admin (awalan 62):</label>
+          <input type="text" id="adminSettingWA" class="form-input" placeholder="6281234567890" />
+        </div>
+        <button onclick="saveAdminSetting()" class="btn-admin" style="width: 100%; justify-content: center; background: #292524;">Simpan WA & QRIS</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast">Notifikasi</div>
+
+  <script>
+    // DATA DEFAULT AWAL
+    const INITIAL_PRODUCTS = [
+      { id: '1', title: 'Voucher Kopi Kenangan Rp 25.000', cat: 'kopken', price: 19500, orig: 25000, desc: 'Kupon saldo Rp 25rb tanpa min belanja.', img: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400' },
+      { id: '2', title: 'Voucher Kopi Kenangan Rp 50.000', cat: 'kopken', price: 38000, orig: 50000, desc: 'Voucher Rp 50.000 hemat & resmi.', img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400' },
+      { id: '3', title: '1x Kopi Kenangan Mantan (Large)', cat: 'kopken', price: 18500, orig: 24000, desc: 'Redeem langsung 1 Cup Mantan Large.', img: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=400' },
+      { id: '4', title: 'Voucher Fore Coffee 1 Cup', cat: 'fnb', price: 21000, orig: 29000, desc: 'Voucher 1 cup minuman reguler Fore.', img: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400' }
+    ];
+
+    const INITIAL_UI = {
+      promo: "<span class='badge-promo'>PROMO</span> Diskon Hemat Kopi Kenangan & Voucher Digital di Palugada Shop30! Kode: <strong>KOPKENHEMAT</strong>",
+      title: "Selamat Datang di<br><span>Palugada Shop30</span>",
+      sub: "Pusat voucher Kopi Kenangan, Fore, Point Coffee, dan aneka voucher digital dengan harga teman paling hemat. Pesanan cepat dan diproses kilat ke WhatsApp!"
+    };
+
+    // LOAD DARI STORAGE
+    let products = JSON.parse(localStorage.getItem('palugada_products')) || INITIAL_PRODUCTS;
+    let uiSettings = JSON.parse(localStorage.getItem('palugada_ui')) || INITIAL_UI;
+    let storeWA = localStorage.getItem('palugada_store_wa') || '6281234567890';
+    let adminPin = localStorage.getItem('palugada_admin_pin') || '1234';
+    // Gunakan dummy qris jika belum upload
+    let storeQris = localStorage.getItem('palugada_store_qris') || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=PalugadaShop30-Belum-Ada-QRIS';
+
+    let selectedItem = null;
+    let discount = 0;
+    let activeCat = 'all';
+
+    function formatRp(num) {
+      return 'Rp ' + Number(num).toLocaleString('id-ID');
+    }
+
+    // TERAPKAN TAMPILAN KE WEB
+    function applyUI() {
+      document.getElementById('uiPromoText').innerHTML = uiSettings.promo;
+      document.getElementById('uiHeroTitle').innerHTML = uiSettings.title;
+      document.getElementById('uiHeroSub').innerHTML = uiSettings.sub;
+    }
+
+    // RENDER PRODUK
+    function renderProducts() {
+      const grid = document.getElementById('productGrid');
+      const filtered = products.filter(p => activeCat === 'all' || p.cat === activeCat);
+      
+      grid.innerHTML = filtered.map(item => `
+        <div onclick="selectItem('${item.id}')" class="card ${selectedItem && selectedItem.id === item.id ? 'selected' : ''}">
+          <img src="${item.img || 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400'}" class="card-img" />
+          <div class="card-title">${item.title}</div>
+          <div class="card-desc">${item.desc}</div>
+          <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: baseline;">
+            <div>
+              ${item.orig ? `<span class="card-coret">${formatRp(item.orig)}</span>` : ''}
+              <div class="card-price">${formatRp(item.price)}</div>
+            </div>
+            <span style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Pilih</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectItem(id) {
+      selectedItem = products.find(p => p.id === id);
+      document.getElementById('selectedTitle').value = `${selectedItem.title} (${formatRp(selectedItem.price)})`;
+      updateTotal();
+      renderProducts();
+      document.getElementById('checkoutBox').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function filterCat(cat, btn) {
+      activeCat = cat;
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderProducts();
+    }
+
+    function applyCoupon() {
+      const code = document.getElementById('couponCode').value.trim().toUpperCase();
+      if (!selectedItem) return notify('Pilih produk terlebih dahulu!');
+      if (code === 'KOPKENHEMAT') {
+        discount = 3000;
+        notify('Kupon KOPKENHEMAT Berhasil! Diskon Rp 3.000');
+      } else {
+        discount = 0;
+        notify('Kode kupon tidak valid!');
+      }
+      updateTotal();
+    }
+
+    function updateTotal() {
+      const price = selectedItem ? selectedItem.price : 0;
+      const total = Math.max(0, price - discount);
+      document.getElementById('priceOriginal').innerText = formatRp(price);
+      document.getElementById('priceDiscount').innerText = `- ${formatRp(discount)}`;
+      document.getElementById('priceTotal').innerText = formatRp(total);
+    }
+
+    function payQRIS() {
+      if (!selectedItem) return notify('Pilih voucher terlebih dahulu!');
+      const wa = document.getElementById('buyerWA').value.trim();
+      if (!wa) return notify('Masukkan nomor WhatsApp Anda!');
+      const total = Math.max(0, selectedItem.price - discount);
+      
+      const w = window.open('', '_blank');
+      w.document.write(`
+        <body style="font-family: sans-serif; text-align: center; padding: 40px; background: #fafaf9;">
+          <h2>Invoice Palugada Shop30</h2>
+          <p>Total Bayar: <strong style="color: #78350f; font-size: 20px;">${formatRp(total)}</strong></p>
+          <p style="color: #555; margin-bottom: 10px;">Produk: ${selectedItem.title}</p>
+          <img src="${storeQris}" style="margin: 20px auto; border: 1px solid #ccc; padding: 12px; border-radius: 12px; background: #fff; max-width: 300px;" />
+          <br><br>
+          <a href="https://wa.me/${storeWA}?text=${encodeURIComponent('Halo Palugada Shop30, saya sudah transfer via QRIS untuk pesanan: ' + selectedItem.title + ' (Total: ' + formatRp(total) + ')')}" style="background: #059669; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Konfirmasi Pembayaran ke WA</a>
+        </body>
+      `);
+    }
+
+    function orderWA() {
+      if (!selectedItem) return notify('Pilih voucher terlebih dahulu!');
+      const wa = document.getElementById('buyerWA').value.trim();
+      const total = Math.max(0, selectedItem.price - discount);
+      const msg = `Halo Admin Palugada Shop30,\n\nSaya ingin memesan voucher:\n• *${selectedItem.title}*\n• Total Bayar: *${formatRp(total)}*\n• Nomor WA Saya: *${wa || '-'}*\n\nMohon dicek stoknya ya! Terima kasih.`;
+      window.open(`https://wa.me/${storeWA}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // ==========================================
+    // SISTEM ADMIN & COMPRESS FOTO
+    // ==========================================
+
+    function openAdmin() {
+      const pin = prompt('Masukkan PIN Admin (Bawaan: 1234):');
+      if (pin === adminPin) {
+        // Isi Form WA & QRIS
+        document.getElementById('adminSettingWA').value = storeWA;
+        document.getElementById('qrisPreview').src = storeQris;
+        document.getElementById('qrisPreview').style.display = 'block';
+        document.getElementById('adminQrisImgBase64').value = storeQris; // Tetap simpan qris yg ada jika tak diubah
+        
+        // Isi Form UI
+        document.getElementById('adminUiPromo').value = uiSettings.promo;
+        document.getElementById('adminUiTitle').value = uiSettings.title;
+        document.getElementById('adminUiSub').value = uiSettings.sub;
+
+        renderAdminTable();
+        document.getElementById('adminModal').classList.add('open');
+      } else if (pin !== null) {
+        alert('PIN Admin salah!');
+      }
+    }
+
+    function closeAdmin() {
+      document.getElementById('adminModal').classList.remove('open');
+      resetProductForm();
+    }
+
+    function renderAdminTable() {
+      const tbody = document.getElementById('adminTableBody');
+      tbody.innerHTML = products.map(p => `
+        <tr>
+          <td>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <img src="${p.img}" style="width:30px; height:30px; object-fit:cover; border-radius:4px;">
+              <span style="font-weight:bold; font-size:11px;">${p.title}</span>
+            </div>
+          </td>
+          <td style="font-size:11px;">${formatRp(p.price)}</td>
+          <td>
+            <button onclick="editAdminProduct('${p.id}')" style="color: blue; border: none; background: none; cursor: pointer; font-size:11px;">Edit</button>
+            <button onclick="deleteAdminProduct('${p.id}')" style="color: red; border: none; background: none; cursor: pointer; margin-left: 6px; font-size:11px;">Hapus</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // FUNGSI KOMPRES FOTO DARI HP (Diperbarui agar bisa dipakai untuk QRIS juga)
+    function compressAndPreviewImage(event, base64InputId, previewImgId) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400; // Resize lebar maks 400px
+          let scaleSize = 1;
+          
+          if (img.width > MAX_WIDTH) {
+              scaleSize = MAX_WIDTH / img.width;
+          }
+          
+          canvas.width = img.width * scaleSize;
+          canvas.height = img.height * scaleSize;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          // Ubah ke base64 dengan kompresi 70% (kualitas tetap bagus untuk web)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          
+          document.getElementById(base64InputId).value = dataUrl;
+          document.getElementById(previewImgId).src = dataUrl;
+          document.getElementById(previewImgId).style.display = 'block';
+        }
+        img.src = e.target.result;
+      }
+      reader.readAsDataURL(file);
+    }
+
+    function saveAdminProduct() {
+      const id = document.getElementById('adminProdId').value;
+      const title = document.getElementById('adminProdName').value;
+      const cat = document.getElementById('adminProdCat').value;
+      const price = Number(document.getElementById('adminProdPrice').value);
+      const orig = Number(document.getElementById('adminProdOrigPrice').value) || null;
+      const desc = document.getElementById('adminProdDesc').value;
+      
+      // Ambil gambar dari hasil upload base64, jika kosong pakai gambar default
+      let img = document.getElementById('adminProdImgBase64').value;
+      if (!img && !id) {
+          img = 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400';
+      }
+
+      if (!title || !price) return alert('Nama dan Harga wajib diisi!');
+
+      if (id) {
+        const idx = products.findIndex(p => p.id === id);
+        if (idx !== -1) {
+            // Jika gambar tidak diubah saat edit, tetap gunakan gambar lama
+            if (!img) img = products[idx].img;
+            products[idx] = { id, title, cat, price, orig, desc, img };
+        }
+      } else {
+        products.unshift({ id: Date.now().toString(), title, cat, price, orig, desc, img });
+      }
+
+      localStorage.setItem('palugada_products', JSON.stringify(products));
+      resetProductForm();
+      renderAdminTable();
+      renderProducts();
+      notify('Produk berhasil disimpan!');
+    }
+
+    function editAdminProduct(id) {
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('adminProdId').value = p.id;
+      document.getElementById('adminProdName').value = p.title;
+      document.getElementById('adminProdCat').value = p.cat;
+      document.getElementById('adminProdPrice').value = p.price;
+      document.getElementById('adminProdOrigPrice').value = p.orig || '';
+      document.getElementById('adminProdDesc').value = p.desc;
+      
+      // Kosongkan input file & siapkan preview gambar lama
+      document.getElementById('adminProdImgFile').value = ''; 
+      document.getElementById('adminProdImgBase64').value = '';
+      document.getElementById('imgPreview').src = p.img;
+      document.getElementById('imgPreview').style.display = 'block';
+    }
+
+    function resetProductForm() {
+      document.getElementById('adminProdId').value = '';
+      document.getElementById('adminProdName').value = '';
+      document.getElementById('adminProdPrice').value = '';
+      document.getElementById('adminProdOrigPrice').value = '';
+      document.getElementById('adminProdDesc').value = '';
+      document.getElementById('adminProdImgFile').value = '';
+      document.getElementById('adminProdImgBase64').value = '';
+      document.getElementById('imgPreview').src = '';
+      document.getElementById('imgPreview').style.display = 'none';
+    }
+
+    function deleteAdminProduct(id) {
+      if (confirm('Hapus menu ini?')) {
+        products = products.filter(p => p.id !== id);
+        localStorage.setItem('palugada_products', JSON.stringify(products));
+        renderAdminTable();
+        renderProducts();
+      }
+    }
+
+    function saveAdminUI() {
+      uiSettings.promo = document.getElementById('adminUiPromo').value;
+      uiSettings.title = document.getElementById('adminUiTitle').value;
+      uiSettings.sub = document.getElementById('adminUiSub').value;
+      
+      localStorage.setItem('palugada_ui', JSON.stringify(uiSettings));
+      applyUI();
+      notify('Tampilan Website Berhasil Diperbarui!');
+    }
+
+    function saveAdminSetting() {
+      storeWA = document.getElementById('adminSettingWA').value.trim();
+      
+      let qrisUpload = document.getElementById('adminQrisImgBase64').value;
+      if(qrisUpload) {
+          storeQris = qrisUpload;
+      }
+      
+      localStorage.setItem('palugada_store_wa', storeWA);
+      localStorage.setItem('palugada_store_qris', storeQris);
+      
+      document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;
+      notify('Nomor WA & QRIS berhasil diperbarui!');
+    }
+
+    function notify(text) {
+      const t = document.getElementById('toast');
+      t.innerText = text;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2500);
+    }
+
+    // JALANKAN SAAT WEB DIBUKA
+    window.onload = () => {
+      applyUI();
+      document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;
+      renderProducts();
+    };
+  </script>
+</body>
+</html>

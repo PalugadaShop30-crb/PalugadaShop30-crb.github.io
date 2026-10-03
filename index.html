@@ -272,12 +272,11 @@
       sub: "Pusat voucher Kopi Kenangan, Fore, Point Coffee, dan aneka voucher digital dengan harga teman paling hemat. Pesanan cepat dan diproses kilat ke WhatsApp!"
     };
 
-    // LOAD DARI STORAGE
+    // LOAD DARI STORAGE - PIN DIUBAH MENJADI 889900
     let products = JSON.parse(localStorage.getItem('palugada_products')) || INITIAL_PRODUCTS;
     let uiSettings = JSON.parse(localStorage.getItem('palugada_ui')) || INITIAL_UI;
     let storeWA = localStorage.getItem('palugada_store_wa') || '6281234567890';
-    let adminPin = localStorage.getItem('palugada_admin_pin') || '1234';
-    // Gunakan dummy qris jika belum upload
+    let adminPin = localStorage.getItem('palugada_admin_pin') || '889900';
     let storeQris = localStorage.getItem('palugada_store_qris') || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=PalugadaShop30-Belum-Ada-QRIS';
 
     let selectedItem = null;
@@ -384,7 +383,7 @@
     // ==========================================
 
     function openAdmin() {
-      const pin = prompt('Masukkan PIN Admin (Bawaan: 1234):');
+      const pin = prompt('Masukkan PIN rahasia Admin:');
       if (pin === adminPin) {
         // Isi Form WA & QRIS
         document.getElementById('adminSettingWA').value = storeWA;
@@ -428,7 +427,6 @@
       `).join('');
     }
 
-    // FUNGSI KOMPRES FOTO DARI HP (Diperbarui agar bisa dipakai untuk QRIS juga)
     function compressAndPreviewImage(event, base64InputId, previewImgId) {
       const file = event.target.files[0];
       if (!file) return;
@@ -471,7 +469,6 @@
       const orig = Number(document.getElementById('adminProdOrigPrice').value) || null;
       const desc = document.getElementById('adminProdDesc').value;
       
-      // Ambil gambar dari hasil upload base64, jika kosong pakai gambar default
       let img = document.getElementById('adminProdImgBase64').value;
       if (!img && !id) {
           img = 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400';
@@ -482,7 +479,6 @@
       if (id) {
         const idx = products.findIndex(p => p.id === id);
         if (idx !== -1) {
-            // Jika gambar tidak diubah saat edit, tetap gunakan gambar lama
             if (!img) img = products[idx].img;
             products[idx] = { id, title, cat, price, orig, desc, img };
         }
@@ -507,7 +503,6 @@
       document.getElementById('adminProdOrigPrice').value = p.orig || '';
       document.getElementById('adminProdDesc').value = p.desc;
       
-      // Kosongkan input file & siapkan preview gambar lama
       document.getElementById('adminProdImgFile').value = ''; 
       document.getElementById('adminProdImgBase64').value = '';
       document.getElementById('imgPreview').src = p.img;
@@ -567,7 +562,6 @@
       setTimeout(() => { t.style.display = 'none'; }, 2500);
     }
 
-    // JALANKAN SAAT WEB DIBUKA
     window.onload = () => {
       applyUI();
       document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;

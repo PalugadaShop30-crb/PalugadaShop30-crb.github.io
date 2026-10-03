@@ -20,8 +20,9 @@
     .nav-container { max-width: 1100px; margin: auto; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
     .logo-box { display: flex; align-items: center; gap: 10px; }
     .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #78350f, #d97706); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; }
-    .btn-admin { background: #1c1917; color: #fef08a; font-size: 12px; font-weight: bold; padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .btn-wa { background: #059669; color: #fff; font-size: 12px; font-weight: bold; padding: 8px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-admin { background: #1c1917; color: #fef08a; font-size: 12px; font-weight: bold; padding: 8px 12px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .btn-cart { background: #d97706; color: #fff; font-size: 12px; font-weight: bold; padding: 8px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; position: relative;}
+    .cart-badge { position: absolute; top: -5px; right: -5px; background: #dc2626; color: #fff; font-size: 9px; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
 
     /* Hero */
     .hero { background: linear-gradient(180deg, #2b1002, #451a03); color: #fff; padding: 40px 16px; }
@@ -31,43 +32,48 @@
     .hero-sub { color: #d6d3d1; font-size: 14px; max-width: 500px; line-height: 1.6; }
 
     /* Main Container */
-    .container { max-width: 1100px; margin: auto; padding: 30px 16px; }
+    .container { max-width: 1100px; margin: auto; padding: 30px 16px; min-height: 50vh;}
     .cat-bar { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 20px; }
     .cat-btn { background: #fff; border: 1px solid #d6d3d1; border-radius: 20px; padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .cat-btn.active { background: #451a03; color: #fff; border-color: #451a03; }
 
     /* Product Grid */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-    .card { background: #fff; border: 1px solid #e7e5e4; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; transition: 0.2s; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .card { background: #fff; border: 1px solid #e7e5e4; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; transition: 0.2s; }
     .card:hover { border-color: #d97706; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .card.selected { border-color: #78350f; box-shadow: 0 0 0 2px #78350f; }
     .card-img { width: 100%; height: 130px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; background: #f5f5f4; }
     .card-title { font-size: 13px; font-weight: 700; color: #1c1917; margin-bottom: 4px; }
     .card-desc { font-size: 11px; color: #78716c; line-height: 1.4; margin-bottom: 10px; }
     .card-price { font-size: 14px; font-weight: 800; color: #78350f; }
     .card-coret { font-size: 11px; color: #a8a29e; text-decoration: line-through; }
+    .btn-add { background: #fef3c7; color: #92400e; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+    .btn-add:hover { background: #d97706; color: #fff;}
 
-    /* Checkout Area */
-    .checkout-box { background: #fff; border-radius: 16px; border: 1px solid #e7e5e4; padding: 24px; margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 768px) { .checkout-box { grid-template-columns: 1fr; } }
+    /* Form & Buttons */
     .form-group { margin-bottom: 14px; }
     .form-label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; }
     .form-input { width: 100%; padding: 10px 12px; border: 1px solid #d6d3d1; border-radius: 10px; font-size: 12px; }
     .form-file { width: 100%; padding: 8px; border: 1px dashed #d6d3d1; border-radius: 10px; font-size: 11px; background: #fafaf9; cursor: pointer; }
-    .btn-buy { width: 100%; padding: 12px; background: #78350f; color: #fff; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; }
-    .btn-order-wa { width: 100%; padding: 10px; background: #059669; color: #fff; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; font-size: 12px; margin-top: 8px; }
-
+    .btn-buy { width: 100%; padding: 12px; background: #78350f; color: #fff; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; margin-top: 10px;}
+    
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
     .modal-overlay.open { display: flex; }
-    .modal-card { background: #fff; border-radius: 20px; padding: 24px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
-    .modal-card table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
-    .modal-card th, .modal-card td { padding: 8px; border-bottom: 1px solid #e7e5e4; text-align: left; }
+    .modal-card { background: #fff; border-radius: 20px; padding: 24px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; position: relative;}
+    .modal-close { position: absolute; right: 16px; top: 16px; font-size: 20px; background: none; border: none; cursor: pointer; color: #78716c; }
+    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; color: #292524; display: flex; align-items: center; gap: 8px;}
+    
+    /* Cart Items */
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #e7e5e4; }
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item-title { font-size: 12px; font-weight: bold; color: #1c1917; }
+    .cart-item-price { font-size: 12px; font-weight: 800; color: #78350f; }
+    .btn-remove { background: #fee2e2; color: #dc2626; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold;}
 
     /* Toast */
     #toast { position: fixed; bottom: 20px; right: 20px; background: #1c1917; color: #fff; font-size: 12px; padding: 10px 16px; border-radius: 8px; display: none; z-index: 60; }
     
-    /* Section Title */
+    /* Admin Section Title */
     .admin-section-title { font-size: 13px; font-weight: bold; margin-bottom: 10px; color: #78350f; border-bottom: 2px solid #fde68a; padding-bottom: 4px; display: inline-block;}
   </style>
 </head>
@@ -90,7 +96,10 @@
         </div>
       </div>
       <div style="display: flex; gap: 8px;">
-        <a id="btnNavWA" href="https://wa.me/6281234567890" target="_blank" class="btn-wa"><i class="fa-brands fa-whatsapp"></i> CS WhatsApp</a>
+        <button onclick="openCartModal()" class="btn-cart">
+          <i class="fa-solid fa-cart-shopping"></i> Keranjang
+          <div class="cart-badge" id="cartBadge">0</div>
+        </button>
         <button onclick="openAdmin()" class="btn-admin"><i class="fa-solid fa-lock"></i> Admin</button>
       </div>
     </div>
@@ -122,57 +131,113 @@
     </div>
 
     <div id="productGrid" class="grid"></div>
-
-    <!-- FORMULIR KASIR / CHECKOUT -->
-    <div id="checkoutBox" class="checkout-box">
-      <div>
-        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px;"><i class="fa-solid fa-cart-shopping"></i> Formulir Pembelian</h3>
-        <div class="form-group">
-          <label class="form-label">Produk Terpilih:</label>
-          <input type="text" id="selectedTitle" readonly placeholder="Silakan klik voucher di atas..." class="form-input" style="background: #f5f5f4;" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nomor WhatsApp Penerima:</label>
-          <input type="tel" id="buyerWA" placeholder="Cth: 081234567890" class="form-input" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Metode Pembayaran:</label>
-          <select id="payMethod" class="form-input">
-            <option value="QRIS">QRIS (OVO, DANA, GoPay, ShopeePay, Semua Bank)</option>
-            <option value="DANA">DANA</option>
-            <option value="GoPay">GoPay</option>
-            <option value="BCA">Transfer Bank BCA</option>
-          </select>
-        </div>
-      </div>
-
-      <div style="background: #f5f5f4; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <h4 style="font-size: 12px; font-weight: bold; margin-bottom: 12px; text-transform: uppercase;">Kupon Potongan</h4>
-          <div style="display: flex; gap: 6px; margin-bottom: 16px;">
-            <input type="text" id="couponCode" placeholder="Kode Promo (KOPKENHEMAT)" class="form-input" />
-            <button onclick="applyCoupon()" style="padding: 0 16px; border-radius: 8px; border: none; background: #292524; color: #fff; cursor: pointer; font-size: 12px; font-weight: bold;">Klaim</button>
-          </div>
-          <div style="font-size: 12px; line-height: 2;">
-            <div style="display: flex; justify-content: space-between;"><span>Harga:</span><span id="priceOriginal">Rp 0</span></div>
-            <div style="display: flex; justify-content: space-between; color: #059669;"><span>Diskon:</span><span id="priceDiscount">- Rp 0</span></div>
-            <hr style="margin: 8px 0; border: none; border-top: 1px solid #d6d3d1;">
-            <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; color: #78350f;">
-              <span>Total Bayar:</span><span id="priceTotal">Rp 0</span>
-            </div>
-          </div>
-        </div>
-        <div>
-          <button onclick="payQRIS()" class="btn-buy"><i class="fa-solid fa-qrcode"></i> Bayar Sekarang (QRIS)</button>
-          <button onclick="orderWA()" class="btn-order-wa"><i class="fa-brands fa-whatsapp"></i> Chat WhatsApp Admin</button>
-        </div>
-      </div>
-    </div>
   </main>
 
-  <!-- MODAL ADMIN KHUSUS ANDA -->
-  <div id="adminModal" class="modal-overlay">
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: KERANJANG BELANJA -->
+  <!-- ========================================== -->
+  <div id="modalCart" class="modal-overlay">
     <div class="modal-card">
+      <button onclick="closeModal('modalCart')" class="modal-close">&times;</button>
+      <h3 class="modal-title"><i class="fa-solid fa-cart-shopping" style="color:#d97706;"></i> Keranjang Belanja</h3>
+      
+      <div id="cartItemsContainer" style="margin-bottom: 20px; max-height: 200px; overflow-y: auto;">
+        <!-- List Produk Keranjang -->
+      </div>
+
+      <div style="background: #f5f5f4; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+        <h4 style="font-size: 11px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase;">Punya Kupon Diskon?</h4>
+        <div style="display: flex; gap: 6px;">
+          <input type="text" id="couponCode" placeholder="Kode Promo (cth: KOPKENHEMAT)" class="form-input" style="padding: 8px; font-size:11px;" />
+          <button onclick="applyCoupon()" style="padding: 0 12px; border-radius: 8px; border: none; background: #292524; color: #fff; cursor: pointer; font-size: 11px; font-weight: bold;">Klaim</button>
+        </div>
+      </div>
+
+      <div style="font-size: 12px; line-height: 2; border-top: 1px solid #e7e5e4; padding-top: 12px;">
+        <div style="display: flex; justify-content: space-between;"><span>Total Harga:</span><span id="cartSubtotal">Rp 0</span></div>
+        <div style="display: flex; justify-content: space-between; color: #059669;"><span>Diskon:</span><span id="cartDiscount">- Rp 0</span></div>
+        <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; color: #78350f; margin-top: 8px; border-top: 1px dashed #d6d3d1; padding-top: 8px;">
+          <span>Total Bayar:</span><span id="cartTotal">Rp 0</span>
+        </div>
+      </div>
+
+      <button onclick="goToCheckout()" class="btn-buy">Lanjut Checkout <i class="fa-solid fa-arrow-right"></i></button>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MODAL 2: FORM ISI DATA PEMBELI -->
+  <!-- ========================================== -->
+  <div id="modalCheckout" class="modal-overlay">
+    <div class="modal-card">
+      <button onclick="closeModal('modalCheckout')" class="modal-close">&times;</button>
+      <h3 class="modal-title"><i class="fa-solid fa-file-signature" style="color:#059669;"></i> Isi Data Pesanan</h3>
+      
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap:</label>
+        <input type="text" id="buyerName" placeholder="Contoh: Budi Santoso" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nomor WhatsApp:</label>
+        <input type="tel" id="buyerWA" placeholder="Contoh: 081234567890" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan Pesanan (Opsional):</label>
+        <textarea id="buyerNotes" rows="2" placeholder="Contoh: Kirim kodenya secepatnya ya min" class="form-input"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 20px;">
+        <button onclick="backToCart()" style="padding: 12px; background: #e7e5e4; color: #292524; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; flex: 1;">Kembali</button>
+        <button onclick="goToPayment()" class="btn-buy" style="margin-top: 0; flex: 2;">Lanjut Pembayaran <i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MODAL 3: PILIH PEMBAYARAN & QRIS -->
+  <!-- ========================================== -->
+  <div id="modalPayment" class="modal-overlay">
+    <div class="modal-card">
+      <button onclick="closeModal('modalPayment')" class="modal-close">&times;</button>
+      <h3 class="modal-title"><i class="fa-solid fa-wallet" style="color:#2563eb;"></i> Pembayaran</h3>
+      
+      <div style="background: #fef3c7; padding: 12px; border-radius: 10px; margin-bottom: 16px; text-align: center;">
+        <p style="font-size: 11px; color: #92400e; margin-bottom: 4px;">Total Tagihan Anda:</p>
+        <p style="font-size: 20px; font-weight: 800; color: #78350f;" id="finalTotalPay">Rp 0</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Pilih Metode Pembayaran:</label>
+        <select id="payMethod" class="form-input" onchange="toggleQrisDisplay()" style="font-weight: bold; font-size: 14px;">
+          <option value="QRIS">💳 QRIS (OVO, DANA, GoPay, m-Banking)</option>
+          <option value="DANA">🔵 DANA Transfer</option>
+          <option value="GoPay">🟢 GoPay Transfer</option>
+          <option value="BCA">🏦 Transfer Bank BCA</option>
+        </select>
+      </div>
+
+      <!-- Kotak Tampil QRIS -->
+      <div id="qrisBox" style="text-align: center; margin-top: 16px; margin-bottom: 20px;">
+        <p style="font-size: 11px; font-weight: bold; color: #555; margin-bottom: 8px;">Scan QRIS di bawah ini untuk membayar:</p>
+        <img id="qrisDisplayFinal" src="" style="width: 200px; height: 200px; object-fit: contain; border: 1px solid #ccc; padding: 10px; border-radius: 12px; background: white;" />
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button onclick="backToCheckout()" style="padding: 12px; background: #e7e5e4; color: #292524; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; flex: 1;">Kembali</button>
+        <button onclick="confirmOrderWA()" class="btn-buy" style="margin-top: 0; flex: 2; background: #059669;"><i class="fa-brands fa-whatsapp"></i> Konfirmasi Pesanan</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MODAL ADMIN KHUSUS ANDA -->
+  <!-- ========================================== -->
+  <div id="adminModal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 550px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h3 style="font-size: 16px; font-weight: 800;"><i class="fa-solid fa-screwdriver-wrench"></i> Admin Palugada Shop30</h3>
         <button onclick="closeAdmin()" style="border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
@@ -183,7 +248,6 @@
         <div class="admin-section-title"><i class="fa-solid fa-box"></i> Kelola Produk & Gambar</div>
         <input type="hidden" id="adminProdId" />
         
-        <!-- Input File Gambar -->
         <div class="form-group">
           <label class="form-label">Upload Foto Produk:</label>
           <input type="file" id="adminProdImgFile" accept="image/*" class="form-file" onchange="compressAndPreviewImage(event, 'adminProdImgBase64', 'imgPreview')" />
@@ -258,7 +322,7 @@
   <div id="toast">Notifikasi</div>
 
   <script>
-    // DATA DEFAULT AWAL
+    // DATA DEFAULT
     const INITIAL_PRODUCTS = [
       { id: '1', title: 'Voucher Kopi Kenangan Rp 25.000', cat: 'kopken', price: 19500, orig: 25000, desc: 'Kupon saldo Rp 25rb tanpa min belanja.', img: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400' },
       { id: '2', title: 'Voucher Kopi Kenangan Rp 50.000', cat: 'kopken', price: 38000, orig: 50000, desc: 'Voucher Rp 50.000 hemat & resmi.', img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400' },
@@ -272,55 +336,48 @@
       sub: "Pusat voucher Kopi Kenangan, Fore, Point Coffee, dan aneka voucher digital dengan harga teman paling hemat. Pesanan cepat dan diproses kilat ke WhatsApp!"
     };
 
-    // LOAD DARI STORAGE - PIN DIUBAH MENJADI 889900
+    // LOAD DARI STORAGE - PIN = 889900
     let products = JSON.parse(localStorage.getItem('palugada_products')) || INITIAL_PRODUCTS;
     let uiSettings = JSON.parse(localStorage.getItem('palugada_ui')) || INITIAL_UI;
     let storeWA = localStorage.getItem('palugada_store_wa') || '6281234567890';
     let adminPin = localStorage.getItem('palugada_admin_pin') || '889900';
     let storeQris = localStorage.getItem('palugada_store_qris') || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=PalugadaShop30-Belum-Ada-QRIS';
 
-    let selectedItem = null;
-    let discount = 0;
+    // VARIABEL KERANJANG BELANJA
+    let cart = [];
+    let discountAmount = 0;
     let activeCat = 'all';
 
     function formatRp(num) {
       return 'Rp ' + Number(num).toLocaleString('id-ID');
     }
 
-    // TERAPKAN TAMPILAN KE WEB
+    // TERAPKAN TAMPILAN
     function applyUI() {
       document.getElementById('uiPromoText').innerHTML = uiSettings.promo;
       document.getElementById('uiHeroTitle').innerHTML = uiSettings.title;
       document.getElementById('uiHeroSub').innerHTML = uiSettings.sub;
     }
 
-    // RENDER PRODUK
+    // RENDER PRODUK DI HALAMAN UTAMA
     function renderProducts() {
       const grid = document.getElementById('productGrid');
       const filtered = products.filter(p => activeCat === 'all' || p.cat === activeCat);
       
       grid.innerHTML = filtered.map(item => `
-        <div onclick="selectItem('${item.id}')" class="card ${selectedItem && selectedItem.id === item.id ? 'selected' : ''}">
+        <div class="card">
           <img src="${item.img || 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400'}" class="card-img" />
           <div class="card-title">${item.title}</div>
           <div class="card-desc">${item.desc}</div>
-          <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end;">
             <div>
               ${item.orig ? `<span class="card-coret">${formatRp(item.orig)}</span>` : ''}
               <div class="card-price">${formatRp(item.price)}</div>
             </div>
-            <span style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Pilih</span>
+            <button onclick="addToCart('${item.id}')" class="btn-add"><i class="fa-solid fa-plus"></i> Beli</button>
           </div>
         </div>
       `).join('');
-    }
-
-    function selectItem(id) {
-      selectedItem = products.find(p => p.id === id);
-      document.getElementById('selectedTitle').value = `${selectedItem.title} (${formatRp(selectedItem.price)})`;
-      updateTotal();
-      renderProducts();
-      document.getElementById('checkoutBox').scrollIntoView({ behavior: 'smooth' });
     }
 
     function filterCat(cat, btn) {
@@ -330,53 +387,166 @@
       renderProducts();
     }
 
+    // ==========================================
+    // SISTEM KERANJANG & CHECKOUT BERTAHAP
+    // ==========================================
+
+    function addToCart(id) {
+      let item = products.find(p => p.id === id);
+      let existing = cart.find(c => c.id === id);
+      
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ ...item, qty: 1 });
+      }
+      
+      updateCartBadge();
+      notify(item.title + ' dimasukkan ke keranjang!');
+    }
+
+    function updateCartBadge() {
+      let totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+      document.getElementById('cartBadge').innerText = totalQty;
+    }
+
+    function removeFromCart(id) {
+      cart = cart.filter(c => c.id !== id);
+      updateCartBadge();
+      renderCartItems();
+    }
+
+    // MODAL 1: KERANJANG
+    function openCartModal() {
+      renderCartItems();
+      document.getElementById('modalCart').classList.add('open');
+    }
+
+    function renderCartItems() {
+      const container = document.getElementById('cartItemsContainer');
+      if (cart.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#78716c; font-size:12px; margin: 20px 0;">Keranjang Anda masih kosong.</p>';
+      } else {
+        container.innerHTML = cart.map(item => `
+          <div class="cart-item">
+            <div style="flex:1;">
+              <div class="cart-item-title">${item.title}</div>
+              <div class="cart-item-price">${item.qty} x ${formatRp(item.price)}</div>
+            </div>
+            <button onclick="removeFromCart('${item.id}')" class="btn-remove">Hapus</button>
+          </div>
+        `).join('');
+      }
+      calculateTotals();
+    }
+
     function applyCoupon() {
       const code = document.getElementById('couponCode').value.trim().toUpperCase();
-      if (!selectedItem) return notify('Pilih produk terlebih dahulu!');
-      if (code === 'KOPKENHEMAT') {
-        discount = 3000;
-        notify('Kupon KOPKENHEMAT Berhasil! Diskon Rp 3.000');
-      } else {
-        discount = 0;
-        notify('Kode kupon tidak valid!');
-      }
-      updateTotal();
-    }
-
-    function updateTotal() {
-      const price = selectedItem ? selectedItem.price : 0;
-      const total = Math.max(0, price - discount);
-      document.getElementById('priceOriginal').innerText = formatRp(price);
-      document.getElementById('priceDiscount').innerText = `- ${formatRp(discount)}`;
-      document.getElementById('priceTotal').innerText = formatRp(total);
-    }
-
-    function payQRIS() {
-      if (!selectedItem) return notify('Pilih voucher terlebih dahulu!');
-      const wa = document.getElementById('buyerWA').value.trim();
-      if (!wa) return notify('Masukkan nomor WhatsApp Anda!');
-      const total = Math.max(0, selectedItem.price - discount);
+      if (cart.length === 0) return notify('Keranjang masih kosong!');
       
-      const w = window.open('', '_blank');
-      w.document.write(`
-        <body style="font-family: sans-serif; text-align: center; padding: 40px; background: #fafaf9;">
-          <h2>Invoice Palugada Shop30</h2>
-          <p>Total Bayar: <strong style="color: #78350f; font-size: 20px;">${formatRp(total)}</strong></p>
-          <p style="color: #555; margin-bottom: 10px;">Produk: ${selectedItem.title}</p>
-          <img src="${storeQris}" style="margin: 20px auto; border: 1px solid #ccc; padding: 12px; border-radius: 12px; background: #fff; max-width: 300px;" />
-          <br><br>
-          <a href="https://wa.me/${storeWA}?text=${encodeURIComponent('Halo Palugada Shop30, saya sudah transfer via QRIS untuk pesanan: ' + selectedItem.title + ' (Total: ' + formatRp(total) + ')')}" style="background: #059669; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Konfirmasi Pembayaran ke WA</a>
-        </body>
-      `);
+      if (code === 'KOPKENHEMAT') {
+        discountAmount = 3000;
+        notify('Kupon Berhasil! Diskon Rp 3.000');
+      } else {
+        discountAmount = 0;
+        notify('Kode kupon salah atau tidak valid!');
+      }
+      calculateTotals();
     }
 
-    function orderWA() {
-      if (!selectedItem) return notify('Pilih voucher terlebih dahulu!');
+    function calculateTotals() {
+      let subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      let finalTotal = Math.max(0, subtotal - discountAmount);
+      
+      // Jika diskon lebih besar dari subtotal, set diskon sama dengan subtotal
+      if (discountAmount > subtotal) discountAmount = subtotal;
+
+      document.getElementById('cartSubtotal').innerText = formatRp(subtotal);
+      document.getElementById('cartDiscount').innerText = `- ${formatRp(discountAmount)}`;
+      document.getElementById('cartTotal').innerText = formatRp(finalTotal);
+      
+      // Update juga total di Modal Pembayaran nanti
+      document.getElementById('finalTotalPay').innerText = formatRp(finalTotal);
+      return finalTotal;
+    }
+
+    // MODAL 2: CHECKOUT (Isi Data)
+    function goToCheckout() {
+      if (cart.length === 0) return alert('Keranjang belanja kosong! Pilih produk dulu.');
+      closeModal('modalCart');
+      document.getElementById('modalCheckout').classList.add('open');
+    }
+
+    function backToCart() {
+      closeModal('modalCheckout');
+      openCartModal();
+    }
+
+    // MODAL 3: PEMBAYARAN
+    function goToPayment() {
+      const name = document.getElementById('buyerName').value.trim();
       const wa = document.getElementById('buyerWA').value.trim();
-      const total = Math.max(0, selectedItem.price - discount);
-      const msg = `Halo Admin Palugada Shop30,\n\nSaya ingin memesan voucher:\n• *${selectedItem.title}*\n• Total Bayar: *${formatRp(total)}*\n• Nomor WA Saya: *${wa || '-'}*\n\nMohon dicek stoknya ya! Terima kasih.`;
+      
+      if (!name) return alert('Harap isi Nama Anda!');
+      if (!wa) return alert('Harap isi Nomor WhatsApp Anda!');
+
+      // Set default gambar QRIS
+      document.getElementById('qrisDisplayFinal').src = storeQris;
+      toggleQrisDisplay(); // Cek metode awal
+
+      closeModal('modalCheckout');
+      document.getElementById('modalPayment').classList.add('open');
+    }
+
+    function backToCheckout() {
+      closeModal('modalPayment');
+      document.getElementById('modalCheckout').classList.add('open');
+    }
+
+    // FUNGSI GANTI METODE BAYAR (Sembunyikan/Tampilkan QRIS)
+    function toggleQrisDisplay() {
+      const method = document.getElementById('payMethod').value;
+      const qrisBox = document.getElementById('qrisBox');
+      if (method === 'QRIS') {
+        qrisBox.style.display = 'block';
+      } else {
+        qrisBox.style.display = 'none';
+      }
+    }
+
+    // PROSES AKHIR: KIRIM KE WHATSAPP
+    function confirmOrderWA() {
+      const name = document.getElementById('buyerName').value.trim();
+      const wa = document.getElementById('buyerWA').value.trim();
+      const notes = document.getElementById('buyerNotes').value.trim();
+      const method = document.getElementById('payMethod').value;
+      const finalTotal = calculateTotals();
+
+      // Rangkai daftar produk yang dibeli
+      let productListText = cart.map((item, index) => `${index + 1}. ${item.title} (${item.qty}x) - ${formatRp(item.price * item.qty)}`).join('\n');
+
+      let msg = `Halo Admin Palugada Shop30, pesanan baru:\n\n` +
+                `*Rincian Produk:*\n${productListText}\n\n` +
+                `*Diskon Kupon:* -${formatRp(discountAmount)}\n` +
+                `*TOTAL BAYAR: ${formatRp(finalTotal)}*\n\n` +
+                `*Data Pembeli:*\n` +
+                `- Nama: ${name}\n` +
+                `- No WA: ${wa}\n` +
+                `- Metode: ${method}\n` +
+                `- Catatan: ${notes || '-'}\n\n` +
+                `Tolong segera diproses ya.`;
+
+      if(method === 'QRIS') {
+          msg += ` (Saya sudah transfer via QRIS)`;
+      }
+
       window.open(`https://wa.me/${storeWA}?text=${encodeURIComponent(msg)}`, '_blank');
     }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('open');
+    }
+
 
     // ==========================================
     // SISTEM ADMIN & COMPRESS FOTO
@@ -389,7 +559,7 @@
         document.getElementById('adminSettingWA').value = storeWA;
         document.getElementById('qrisPreview').src = storeQris;
         document.getElementById('qrisPreview').style.display = 'block';
-        document.getElementById('adminQrisImgBase64').value = storeQris; // Tetap simpan qris yg ada jika tak diubah
+        document.getElementById('adminQrisImgBase64').value = storeQris; 
         
         // Isi Form UI
         document.getElementById('adminUiPromo').value = uiSettings.promo;
@@ -527,6 +697,10 @@
         localStorage.setItem('palugada_products', JSON.stringify(products));
         renderAdminTable();
         renderProducts();
+        
+        // Hapus juga dari keranjang jika sedang ada di keranjang
+        cart = cart.filter(c => c.id !== id);
+        updateCartBadge();
       }
     }
 

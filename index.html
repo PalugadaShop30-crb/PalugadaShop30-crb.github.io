@@ -93,7 +93,27 @@
 
     /* QRIS Big Display */
     .qris-container { text-align: center; background: #fff; border: 2px dashed #d97706; border-radius: 20px; padding: 24px 16px; margin: 20px 0; box-shadow: 0 10px 25px rgba(217,119,6,0.1);}
-    .qris-img { width: 100%; max-width: 250px; height: auto; border-radius: 12px; margin: 10px auto; display: block; border: 1px solid #e7e5e4; padding: 8px;}
+    
+    /* Crop/Zoom QRIS agar fokus ke barcode */
+    .qris-crop-wrapper {
+        width: 250px;
+        height: 250px;
+        overflow: hidden;
+        border-radius: 16px;
+        margin: 10px auto;
+        position: relative;
+        background: #fff;
+        border: 1px solid #e7e5e4;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .qris-img { 
+        width: 130%; /* Diperbesar 30% agar fokus ke tengah */
+        height: auto; 
+        object-fit: cover;
+    }
 
     /* Toast */
     #toast { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); background: #1c1917; color: #fff; font-size: 12px; padding: 10px 20px; border-radius: 30px; display: none; z-index: 100; font-weight: bold; text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
@@ -264,7 +284,8 @@
         <p style="font-size: 12px; font-weight: bold; color: #78350f; margin-bottom: 4px;">Total Tagihan Pembayaran:</p>
         <p style="font-size: 28px; font-weight: 800; color: #dc2626; margin-bottom: 16px;" id="finalTotalPay">Rp 0</p>
         
-        <div style="background: #fff; padding: 10px; border-radius: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <!-- CROP / ZOOM QRIS -->
+        <div class="qris-crop-wrapper">
             <img id="qrisDisplayFinal" src="" class="qris-img" />
         </div>
         
@@ -500,14 +521,14 @@
         { id: 'f_catatan', label: 'Catatan / Request', type: 'text', req: false }
     ];
 
-    // LOAD DATABASE DARI MEMORI HP/LAPTOP (VERSI 6)
-    let categories = JSON.parse(localStorage.getItem('palu_cats_v6')) || INITIAL_CATEGORIES;
-    let products = JSON.parse(localStorage.getItem('palu_products_v6')) || INITIAL_PRODUCTS;
-    let uiSettings = JSON.parse(localStorage.getItem('palu_ui_v6')) || INITIAL_UI;
-    let checkoutFields = JSON.parse(localStorage.getItem('palu_fields_v6')) || INITIAL_CHECKOUT_FIELDS;
-    let storeWA = localStorage.getItem('palu_wa_v6') || '6281234567890';
-    let adminPin = localStorage.getItem('palu_pin_v6') || '889900';
-    let storeQris = localStorage.getItem('palu_qris_v6') || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Belum-Ada-QRIS';
+    // LOAD DATABASE DARI MEMORI HP/LAPTOP (VERSI 8)
+    let categories = JSON.parse(localStorage.getItem('palu_cats_v8')) || INITIAL_CATEGORIES;
+    let products = JSON.parse(localStorage.getItem('palu_products_v8')) || INITIAL_PRODUCTS;
+    let uiSettings = JSON.parse(localStorage.getItem('palu_ui_v8')) || INITIAL_UI;
+    let checkoutFields = JSON.parse(localStorage.getItem('palu_fields_v8')) || INITIAL_CHECKOUT_FIELDS;
+    let storeWA = localStorage.getItem('palu_wa_v8') || '6281234567890';
+    let adminPin = localStorage.getItem('palu_pin_v8') || '889900';
+    let storeQris = localStorage.getItem('palu_qris_v8') || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Belum-Ada-QRIS';
 
     let cart = [];
     let discountAmount = 0;
@@ -838,13 +859,13 @@
     // SISTEM ADMIN & KOMPRES FOTO
     // ==========================================
     function openAdmin() {
-      let isLoggedIn = localStorage.getItem('palu_logged_v6');
+      let isLoggedIn = localStorage.getItem('palu_logged_v8');
       if (isLoggedIn === 'true') {
           showAdminPanel();
       } else {
           const pin = prompt('Masukkan PIN rahasia Admin:');
           if (pin === adminPin) {
-              localStorage.setItem('palu_logged_v6', 'true');
+              localStorage.setItem('palu_logged_v8', 'true');
               showAdminPanel();
           } else if (pin !== null) {
               alert('PIN Admin salah!');
@@ -853,7 +874,7 @@
     }
 
     function logoutAdmin() {
-        localStorage.removeItem('palu_logged_v6');
+        localStorage.removeItem('palu_logged_v8');
         closeAdmin();
         notify('Berhasil keluar dari Admin');
     }
@@ -861,11 +882,13 @@
     function showAdminPanel() {
         switchAdminTab('tabProduk');
         
+        // Isi Form WA & QRIS
         document.getElementById('adminSettingWA').value = storeWA;
         document.getElementById('qrisPreviewAdmin').src = storeQris;
         document.getElementById('qrisPreviewAdmin').style.display = 'block';
         document.getElementById('adminQrisImgBase64').value = storeQris; 
         
+        // Isi Form UI
         document.getElementById('adUiPromoLeft').value = uiSettings.promoLeft;
         document.getElementById('adUiPromoRight').value = uiSettings.promoRight;
         document.getElementById('adUiHeaderName').value = uiSettings.headerName;
@@ -962,7 +985,7 @@
         if(!name) return;
         const id = name.toLowerCase().replace(/[^a-z0-9]/g, '');
         categories.push({ id, name });
-        localStorage.setItem('palu_cats_v6', JSON.stringify(categories));
+        localStorage.setItem('palu_cats_v8', JSON.stringify(categories));
         document.getElementById('newCatName').value = '';
         renderCategories();
         renderAdminCatSelect();
@@ -972,7 +995,7 @@
     function deleteCategory(id) {
         if(confirm('Hapus kategori ini?')) {
             categories = categories.filter(c => c.id !== id);
-            localStorage.setItem('palu_cats_v6', JSON.stringify(categories));
+            localStorage.setItem('palu_cats_v8', JSON.stringify(categories));
             renderCategories();
             renderAdminCatSelect();
         }
@@ -1020,7 +1043,7 @@
         products.unshift({ id: Date.now().toString(), title, cat, price, orig, badge, desc, img, addons: newAddons });
       }
 
-      localStorage.setItem('palu_products_v6', JSON.stringify(products));
+      localStorage.setItem('palu_products_v8', JSON.stringify(products));
       resetProductForm();
       renderAdminTable();
       renderProducts();
@@ -1067,7 +1090,7 @@
     function deleteAdminProduct(id) {
       if (confirm('Hapus produk ini permanen?')) {
         products = products.filter(p => p.id !== id);
-        localStorage.setItem('palu_products_v6', JSON.stringify(products));
+        localStorage.setItem('palu_products_v8', JSON.stringify(products));
         renderAdminTable();
         renderProducts();
         cart = cart.filter(c => c.productId !== id);
@@ -1115,7 +1138,7 @@
             }
         });
         checkoutFields = newFields;
-        localStorage.setItem('palu_fields_v6', JSON.stringify(checkoutFields));
+        localStorage.setItem('palu_fields_v8', JSON.stringify(checkoutFields));
         notify('Form Checkout Berhasil Disimpan!');
     }
 
@@ -1134,7 +1157,7 @@
       let bgUpload = document.getElementById('adUiHeroBgBase64').value;
       if(bgUpload) uiSettings.heroBgImg = bgUpload;
 
-      localStorage.setItem('palu_ui_v6', JSON.stringify(uiSettings));
+      localStorage.setItem('palu_ui_v8', JSON.stringify(uiSettings));
       applyUI();
       notify('Tampilan Web berhasil diubah!');
     }
@@ -1144,8 +1167,8 @@
       let qrisUpload = document.getElementById('adminQrisImgBase64').value;
       if(qrisUpload) storeQris = qrisUpload;
       
-      localStorage.setItem('palu_wa_v6', storeWA);
-      localStorage.setItem('palu_qris_v6', storeQris);
+      localStorage.setItem('palu_wa_v8', storeWA);
+      localStorage.setItem('palu_qris_v8', storeQris);
       document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;
       notify('WA & QRIS berhasil diperbarui!');
     }

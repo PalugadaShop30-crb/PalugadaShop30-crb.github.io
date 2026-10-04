@@ -63,7 +63,7 @@
     .form-input:focus { outline: none; border-color: #d97706; }
     .btn-buy { width: 100%; padding: 12px; background: #78350f; color: #fff; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px;}
     
-    /* Modal / Bottom Sheet Style for Mobile */
+    /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: flex-end; justify-content: center; z-index: 50; padding: 0; }
     @media (min-width: 640px) { .modal-overlay { align-items: center; padding: 16px; } }
     .modal-overlay.open { display: flex; animation: fadeIn 0.2s; }
@@ -91,28 +91,30 @@
     .cart-item-price { font-size: 13px; font-weight: 800; color: #78350f; margin-top: 4px;}
     .btn-remove { background: #fee2e2; color: #dc2626; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; height: fit-content;}
 
-    /* QRIS Big Display */
+    /* QRIS Big Display with CROP/ZOOM */
     .qris-container { text-align: center; background: #fff; border: 2px dashed #d97706; border-radius: 20px; padding: 24px 16px; margin: 20px 0; box-shadow: 0 10px 25px rgba(217,119,6,0.1);}
     
-    /* Crop/Zoom QRIS agar fokus ke barcode */
     .qris-crop-wrapper {
-        width: 250px;
-        height: 250px;
+        width: 220px;
+        height: 220px;
         overflow: hidden;
         border-radius: 16px;
         margin: 10px auto;
         position: relative;
         background: #fff;
-        border: 1px solid #e7e5e4;
         display: flex;
         justify-content: center;
         align-items: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 1px solid #e7e5e4;
     }
     
     .qris-img { 
-        width: 130%; /* Diperbesar 30% agar fokus ke tengah */
-        height: auto; 
+        width: 100%; 
+        height: 100%; 
         object-fit: cover;
+        object-position: center;
+        transform: scale(1.6); /* ZOOM KUAT untuk potong teks atas/bawah, hanya menyisakan barcode */
     }
 
     /* Toast */
@@ -230,17 +232,10 @@
         <!-- List Produk Keranjang -->
       </div>
 
-      <div style="background: #f5f5f4; padding: 12px; border-radius: 12px; margin-bottom: 16px; border: 1px dashed #d6d3d1;">
-        <div style="display: flex; gap: 6px;">
-          <input type="text" id="couponCode" placeholder="Kode Promo Diskon..." class="form-input" style="padding: 8px; font-size:11px;" />
-          <button onclick="applyCoupon()" style="padding: 0 16px; border-radius: 8px; border: none; background: #292524; color: #fff; cursor: pointer; font-size: 11px; font-weight: bold;">Klaim</button>
-        </div>
-      </div>
+      <!-- KODE PROMO DIHAPUS AGAR SIMPEL -->
 
-      <div style="font-size: 12px; line-height: 1.8; border-top: 1px solid #e7e5e4; padding-top: 12px;">
-        <div style="display: flex; justify-content: space-between; color: #555;"><span>Subtotal:</span><span id="cartSubtotal">Rp 0</span></div>
-        <div style="display: flex; justify-content: space-between; color: #059669; font-weight: bold;"><span>Diskon:</span><span id="cartDiscount">- Rp 0</span></div>
-        <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 18px; color: #78350f; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e7e5e4;">
+      <div style="font-size: 13px; line-height: 1.8; border-top: 1px solid #e7e5e4; padding-top: 12px;">
+        <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 18px; color: #78350f; margin-top: 8px; padding-top: 8px;">
           <span>Total Bayar:</span><span id="cartTotal">Rp 0</span>
         </div>
       </div>
@@ -284,13 +279,13 @@
         <p style="font-size: 12px; font-weight: bold; color: #78350f; margin-bottom: 4px;">Total Tagihan Pembayaran:</p>
         <p style="font-size: 28px; font-weight: 800; color: #dc2626; margin-bottom: 16px;" id="finalTotalPay">Rp 0</p>
         
-        <!-- CROP / ZOOM QRIS -->
+        <!-- CROP / ZOOM QRIS FOKUS BARCODE -->
         <div class="qris-crop-wrapper">
             <img id="qrisDisplayFinal" src="" class="qris-img" />
         </div>
         
         <p style="font-size: 11px; color: #555; margin-top: 16px; line-height: 1.5;">
-          1. Simpan (Screenshot) gambar QRIS di atas.<br>
+          1. Simpan (Screenshot) kotak barcode di atas.<br>
           2. Buka aplikasi E-Wallet / m-Banking Anda.<br>
           3. Pilih fitur Scan QRIS, lalu upload screenshot tadi.<br>
           4. Pastikan nominal sesuai: <strong id="txtNominalBawah">Rp 0</strong>
@@ -521,17 +516,16 @@
         { id: 'f_catatan', label: 'Catatan / Request', type: 'text', req: false }
     ];
 
-    // LOAD DATABASE DARI MEMORI HP/LAPTOP (VERSI 8)
-    let categories = JSON.parse(localStorage.getItem('palu_cats_v8')) || INITIAL_CATEGORIES;
-    let products = JSON.parse(localStorage.getItem('palu_products_v8')) || INITIAL_PRODUCTS;
-    let uiSettings = JSON.parse(localStorage.getItem('palu_ui_v8')) || INITIAL_UI;
-    let checkoutFields = JSON.parse(localStorage.getItem('palu_fields_v8')) || INITIAL_CHECKOUT_FIELDS;
-    let storeWA = localStorage.getItem('palu_wa_v8') || '6281234567890';
-    let adminPin = localStorage.getItem('palu_pin_v8') || '889900';
-    let storeQris = localStorage.getItem('palu_qris_v8') || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Belum-Ada-QRIS';
+    // LOAD DATABASE DARI MEMORI HP/LAPTOP (VERSI 9)
+    let categories = JSON.parse(localStorage.getItem('palu_cats_v9')) || INITIAL_CATEGORIES;
+    let products = JSON.parse(localStorage.getItem('palu_products_v9')) || INITIAL_PRODUCTS;
+    let uiSettings = JSON.parse(localStorage.getItem('palu_ui_v9')) || INITIAL_UI;
+    let checkoutFields = JSON.parse(localStorage.getItem('palu_fields_v9')) || INITIAL_CHECKOUT_FIELDS;
+    let storeWA = localStorage.getItem('palu_wa_v9') || '6281234567890';
+    let adminPin = localStorage.getItem('palu_pin_v9') || '889900';
+    let storeQris = localStorage.getItem('palu_qris_v9') || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Belum-Ada-QRIS';
 
     let cart = [];
-    let discountAmount = 0;
     let activeCat = 'all';
 
     let tempVariantProduct = null;
@@ -599,7 +593,6 @@
         `;
     }
 
-    // Fungsi Render Produk Diperbarui
     function renderProducts() {
       const container = document.getElementById('productGridContainer');
       container.innerHTML = '';
@@ -610,7 +603,6 @@
       }
 
       if (activeCat === 'all') {
-          // 1. Tampilkan Promo Section (Bila ada harga coret)
           const promoProds = products.filter(p => p.orig && p.orig > p.price);
           if (promoProds.length > 0) {
               let html = `<h3 class="category-header"><i class="fa-solid fa-fire" style="color:#dc2626;"></i> Promo Spesial</h3>`;
@@ -618,7 +610,6 @@
               container.innerHTML += html;
           }
 
-          // 2. Tampilkan per kategori yang memiliki produk
           categories.forEach(c => {
               const catProds = products.filter(p => p.cat === c.id);
               if(catProds.length > 0) {
@@ -628,7 +619,6 @@
               }
           });
           
-          // Produk tanpa kategori yang jelas
           const uncatProds = products.filter(p => !categories.find(c => c.id === p.cat));
           if(uncatProds.length > 0) {
                let html = `<h3 class="category-header" style="margin-top: 30px;"><i class="fa-solid fa-box"></i> Lainnya</h3>`;
@@ -637,7 +627,6 @@
           }
 
       } else {
-          // Tampilkan grid biasa untuk satu kategori spesifik
           let filtered = products.filter(p => p.cat === activeCat);
           if(filtered.length > 0) {
               container.innerHTML = `<div class="grid" style="margin-top:10px;">` + filtered.map(p => generateProductCard(p)).join('') + `</div>`;
@@ -770,28 +759,10 @@
       renderCartItems();
     }
 
-    function applyCoupon() {
-      const code = document.getElementById('couponCode').value.trim().toUpperCase();
-      if (cart.length === 0) return notify('Keranjang kosong!');
-      if (code !== '') { 
-        discountAmount = 3000;
-        notify('Kupon Berhasil! Diskon Rp 3.000');
-      } else {
-        discountAmount = 0;
-        notify('Masukkan kode kupon!');
-      }
-      calculateTotals();
-    }
-
     function calculateTotals() {
-      let subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
-      let finalTotal = Math.max(0, subtotal - discountAmount);
-      if (discountAmount > subtotal) discountAmount = subtotal;
+      let finalTotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
 
-      document.getElementById('cartSubtotal').innerText = formatRp(subtotal);
-      document.getElementById('cartDiscount').innerText = `- ${formatRp(discountAmount)}`;
       document.getElementById('cartTotal').innerText = formatRp(finalTotal);
-      
       document.getElementById('finalTotalPay').innerText = formatRp(finalTotal);
       document.getElementById('txtNominalBawah').innerText = formatRp(finalTotal);
       return finalTotal;
@@ -844,8 +815,6 @@
 
       let msg = `Halo Admin *${uiSettings.headerName}*, pesanan baru:\n\n` +
                 `*🛍️ RINCIAN PRODUK:*\n${productListText}\n\n` +
-                `*💸 Total Harga:* ${formatRp(finalTotal + discountAmount)}\n` +
-                `*🎟️ Diskon:* -${formatRp(discountAmount)}\n` +
                 `*✅ TOTAL BAYAR: ${formatRp(finalTotal)}*\n\n` +
                 `*👤 DATA PEMBELI:*\n` +
                 buyerDataStr +
@@ -859,13 +828,13 @@
     // SISTEM ADMIN & KOMPRES FOTO
     // ==========================================
     function openAdmin() {
-      let isLoggedIn = localStorage.getItem('palu_logged_v8');
+      let isLoggedIn = localStorage.getItem('palu_logged_v9');
       if (isLoggedIn === 'true') {
           showAdminPanel();
       } else {
           const pin = prompt('Masukkan PIN rahasia Admin:');
           if (pin === adminPin) {
-              localStorage.setItem('palu_logged_v8', 'true');
+              localStorage.setItem('palu_logged_v9', 'true');
               showAdminPanel();
           } else if (pin !== null) {
               alert('PIN Admin salah!');
@@ -874,7 +843,7 @@
     }
 
     function logoutAdmin() {
-        localStorage.removeItem('palu_logged_v8');
+        localStorage.removeItem('palu_logged_v9');
         closeAdmin();
         notify('Berhasil keluar dari Admin');
     }
@@ -985,7 +954,7 @@
         if(!name) return;
         const id = name.toLowerCase().replace(/[^a-z0-9]/g, '');
         categories.push({ id, name });
-        localStorage.setItem('palu_cats_v8', JSON.stringify(categories));
+        localStorage.setItem('palu_cats_v9', JSON.stringify(categories));
         document.getElementById('newCatName').value = '';
         renderCategories();
         renderAdminCatSelect();
@@ -995,7 +964,7 @@
     function deleteCategory(id) {
         if(confirm('Hapus kategori ini?')) {
             categories = categories.filter(c => c.id !== id);
-            localStorage.setItem('palu_cats_v8', JSON.stringify(categories));
+            localStorage.setItem('palu_cats_v9', JSON.stringify(categories));
             renderCategories();
             renderAdminCatSelect();
         }
@@ -1043,7 +1012,7 @@
         products.unshift({ id: Date.now().toString(), title, cat, price, orig, badge, desc, img, addons: newAddons });
       }
 
-      localStorage.setItem('palu_products_v8', JSON.stringify(products));
+      localStorage.setItem('palu_products_v9', JSON.stringify(products));
       resetProductForm();
       renderAdminTable();
       renderProducts();
@@ -1090,7 +1059,7 @@
     function deleteAdminProduct(id) {
       if (confirm('Hapus produk ini permanen?')) {
         products = products.filter(p => p.id !== id);
-        localStorage.setItem('palu_products_v8', JSON.stringify(products));
+        localStorage.setItem('palu_products_v9', JSON.stringify(products));
         renderAdminTable();
         renderProducts();
         cart = cart.filter(c => c.productId !== id);
@@ -1138,7 +1107,7 @@
             }
         });
         checkoutFields = newFields;
-        localStorage.setItem('palu_fields_v8', JSON.stringify(checkoutFields));
+        localStorage.setItem('palu_fields_v9', JSON.stringify(checkoutFields));
         notify('Form Checkout Berhasil Disimpan!');
     }
 
@@ -1157,7 +1126,7 @@
       let bgUpload = document.getElementById('adUiHeroBgBase64').value;
       if(bgUpload) uiSettings.heroBgImg = bgUpload;
 
-      localStorage.setItem('palu_ui_v8', JSON.stringify(uiSettings));
+      localStorage.setItem('palu_ui_v9', JSON.stringify(uiSettings));
       applyUI();
       notify('Tampilan Web berhasil diubah!');
     }
@@ -1167,8 +1136,8 @@
       let qrisUpload = document.getElementById('adminQrisImgBase64').value;
       if(qrisUpload) storeQris = qrisUpload;
       
-      localStorage.setItem('palu_wa_v8', storeWA);
-      localStorage.setItem('palu_qris_v8', storeQris);
+      localStorage.setItem('palu_wa_v9', storeWA);
+      localStorage.setItem('palu_qris_v9', storeQris);
       document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;
       notify('WA & QRIS berhasil diperbarui!');
     }

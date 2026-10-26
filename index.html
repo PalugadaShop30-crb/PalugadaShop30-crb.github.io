@@ -960,8 +960,18 @@
       const finalTotal = calculateTotals();
 
       let productListText = cart.map((item, index) => {
-          let addonTxt = item.addons.length > 0 ? `\n   + ${item.addons.map(a => a.name).join(', ')}` : '';
-          return `${index + 1}. ${item.title} (${item.qty}x)${addonTxt}\n   Sub: ${formatRp(item.unitPrice * item.qty)}`;
+          const product = products.find(p => String(p.id) === String(item.productId));
+          const basePrice = product ? Number(product.price) : Number(item.unitPrice);
+          const addonTotal = (item.addons || []).reduce((sum, addon) => sum + Number(addon.price || 0), 0);
+          const addonLines = item.addons && item.addons.length
+            ? item.addons.map(addon => `   • ${addon.name}${Number(addon.price || 0) > 0 ? `: +${formatRp(addon.price)}` : ''}`).join('\n')
+            : '   • Tidak ada';
+          return `${index + 1}. *${item.title}*
+   Jumlah        : ${item.qty}x
+   Harga dasar   : ${formatRp(basePrice)}
+   Tambahan:
+${addonLines}
+   Total produk  : ${formatRp(Number(item.unitPrice) * Number(item.qty))}`;
       }).join('\n\n');
 
       let buyerDataStr = '';
@@ -976,15 +986,21 @@
           buyerDataStr += `- ${f.label}: ${val || '-'}\n`;
       }
 
-      let msg = `Halo Admin *${uiSettings.headerName}*, pesanan baru:\n\n` +
-                `*🛍️ RINCIAN PRODUK:*\n${productListText}\n\n` +
-                `*💸 Total Harga:* ${formatRp(finalTotal + discountAmount)}\n` +
-                `*🎟️ Diskon:* -${formatRp(discountAmount)}\n` +
-                `*✅ TOTAL BAYAR: ${formatRp(finalTotal)}*\n\n` +
-                `*👤 DATA PEMBELI:*\n` +
+      let msg = `Halo Admin *${uiSettings.headerName}*, saya ingin konfirmasi pesanan setelah pembayaran QRIS.\n\n` +
+                `━━━━━━━━━━━━━━━━━━\n` +
+                `*🛍️ RINCIAN PESANAN*\n` +
+                `━━━━━━━━━━━━━━━━━━\n\n` +
+                `${productListText}\n\n` +
+                `━━━━━━━━━━━━━━━━━━\n` +
+                `*💰 RINGKASAN PEMBAYARAN*\n\n` +
+                `Total harga : ${formatRp(finalTotal + discountAmount)}\n` +
+                `Diskon      : -${formatRp(discountAmount)}\n` +
+                `*TOTAL BAYAR: ${formatRp(finalTotal)}*\n\n` +
+                `━━━━━━━━━━━━━━━━━━\n` +
+                `*👤 DATA PEMBELI*\n\n` +
                 buyerDataStr +
-                `- Bayar via: *QRIS Otomatis*\n\n` +
-                `_(Bukti transfer QRIS saya lampirkan setelah ini)_`;
+                `Metode bayar: QRIS Otomatis\n\n` +
+                `_(Bukti pembayaran QRIS saya lampirkan setelah ini.)_`;
 
       window.open(`https://wa.me/${storeWA}?text=${encodeURIComponent(msg)}`, '_blank');
     }

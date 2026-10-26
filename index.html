@@ -974,10 +974,17 @@
       openCartModal();
     }
 
-    function goToCheckout() {
+    async function goToCheckout() {
       if (cart.length === 0) return alert('Keranjang kosong! Silakan belanja dulu.');
       renderCheckoutForm();
       renderCheckoutSummary();
+      const qrisImage = document.getElementById('qrisDisplayFinal');
+      try {
+        qrisImage.src = await makeCenteredQrisCrop(storeQris);
+      } catch (error) {
+        qrisImage.src = storeQris;
+        console.warn('QRIS ditampilkan tanpa crop:', error);
+      }
       closeModal('modalCart');
       document.getElementById('modalCheckout').classList.add('open');
     }

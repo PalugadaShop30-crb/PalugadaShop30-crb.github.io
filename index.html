@@ -978,35 +978,85 @@
       if (cart.length === 0) return alert('Keranjang kosong! Silakan belanja dulu.');
       renderCheckoutForm();
       renderCheckoutSummary();
+      calculateTotals();
       const qrisImage = document.getElementById('qrisDisplayFinal');
-      try {
-        qrisImage.src = await makeCenteredQrisCrop(storeQris);
-      } catch (error) {
-        qrisImage.src = storeQris;
-        console.warn('QRIS ditampilkan tanpa crop:', error);
-      }
+      // Buka halaman checkout segera; QRIS langsung tampil tanpa tombol pemicu tambahan.
+      qrisImage.src = storeQris;
       closeModal('modalCart');
       document.getElementById('modalCheckout').classList.add('open');
+      try {
+        const cropped = await makeCenteredQrisCrop(storeQris);
+        if (document.getElementById('modalCheckout').classList.contains('open')) qrisImage.src = cropped;
+      } catch (error) {
+        console.warn('QRIS ditampilkan dari gambar asli karena crop gagal:', error);
+      }
     }
 
-    // Buat tampilan dan file unduhan dari potongan tengah gambar QRIS.
-    function makeCenteredQrisCrop(source, cropRatio = 0.9) {
+    // Deteksi area kode QR berdasarkan pola gelap yang padat, lalu potong bingkai/teks di luarnya.
+    function makeCenteredQrisCrop(source) {
       return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = function() {
-          const side = Math.floor(Math.min(img.naturalWidth, img.naturalHeight) * cropRatio);
-          if (!side) return reject(new Error('Gambar QRIS tidak valid.'));
-          const sx = Math.floor((img.naturalWidth - side) / 2);
-          const sy = Math.floor((img.naturalHeight - side) / 2);
-          const canvas = document.createElement('canvas');
-          canvas.width = side;
-          canvas.height = side;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) return reject(new Error('Gagal memproses gambar QRIS.'));
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(0, 0, side, side);
-          ctx.drawImage(img, sx, sy, side, side, 0, 0, side, side);
-          resolve(canvas.toDataURL('image/png'));
+          try {
+            const w = img.naturalWidth, h = img.naturalHeight;
+            if (!w || !h) throw new Error('Gambar QRIS tidak valid.');
+            const scan = document.createElement('canvas');
+            const scanCtx = scan.getContext('2d', { willReadFrequently: true });
+            if (!scanCtx) throw new Error('Gagal memproses gambar QRIS.');
+            scan.width = w; scan.height = h;
+            scanCtx.fillStyle = '#fff'; scanCtx.fillRect(0, 0, w, h);
+            scanCtx.drawImage(img, 0, 0, w, h);
+            const pixels = scanCtx.getImageData(0, 0, w, h).data;
+            const rowCounts = new Uint32Array(h), colCounts = new Uint32Array(w);
+            for (let y = 0; y < h; y++) {
+              for (let x = 0; x < w; x++) {
+                const p = (y * w + x) * 4;
+                if (pixels[p] < 105 && pixels[p + 1] < 105 && pixels[p + 2] < 105) {
+                  rowCounts[y]++; colCounts[x]++;
+                }
+              }
+            }
+            function densestRun(counts, threshold) {
+              let bestStart = 0, bestEnd = counts.length - 1, bestLength = 0;
+              let start = -1, lastActive = -1;
+              for (let i = 0; i < counts.length; i++) {
+                if (counts[i] >= threshold) {
+                  if (start < 0) start = i;
+                  lastActive = i;
+                } else if (start >= 0 && i - lastActive > Math.max(4, Math.floor(counts.length * 0.008))) {
+                  const length = lastActive - start + 1;
+                  if (length > bestLength) { bestLength = length; bestStart = start; bestEnd = lastActive; }
+                  start = -1; lastActive = -1;
+                }
+              }
+              if (start >= 0) {
+                const length = lastActive - start + 1;
+                if (length > bestLength) { bestLength = length; bestStart = start; bestEnd = lastActive; }
+              }
+              return { start: bestStart, end: bestEnd, length: bestLength };
+            }
+            const rows = densestRun(rowCounts, Math.max(3, Math.floor(w * 0.09)));
+            const cols = densestRun(colCounts, Math.max(3, Math.floor(h * 0.09)));
+            let left = cols.start, right = cols.end, top = rows.start, bottom = rows.end;
+            // Jika gambar sumber sudah berupa kode QR saja, pertahankan seluruh kode dengan margin kecil.
+            if (rows.length < h * 0.18 || cols.length < w * 0.18) {
+              const side = Math.min(w, h);
+              left = Math.floor((w - side) / 2); top = Math.floor((h - side) / 2);
+              right = left + side - 1; bottom = top + side - 1;
+            }
+            const boxW = right - left + 1, boxH = bottom - top + 1;
+            const side = Math.min(Math.min(w, h), Math.ceil(Math.max(boxW, boxH) * 1.035));
+            const cx = (left + right) / 2, cy = (top + bottom) / 2;
+            const sx = Math.max(0, Math.min(w - side, Math.floor(cx - side / 2)));
+            const sy = Math.max(0, Math.min(h - side, Math.floor(cy - side / 2)));
+            const out = document.createElement('canvas');
+            out.width = side; out.height = side;
+            const ctx = out.getContext('2d');
+            if (!ctx) throw new Error('Gagal membuat gambar QRIS.');
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, side, side);
+            ctx.drawImage(img, sx, sy, side, side, 0, 0, side, side);
+            resolve(out.toDataURL('image/png'));
+          } catch (error) { reject(error); }
         };
         img.onerror = () => reject(new Error('Gambar QRIS tidak bisa dibaca.'));
         img.src = source;

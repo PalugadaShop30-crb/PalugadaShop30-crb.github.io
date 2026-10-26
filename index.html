@@ -947,9 +947,37 @@
         `).join('');
     }
 
+    function renderCheckoutSummary() {
+      const summary = document.getElementById('checkoutOrderSummary');
+      if (!summary) return;
+      summary.innerHTML = cart.map((item, index) => {
+        const product = products.find(p => String(p.id) === String(item.productId));
+        const basePrice = product ? Number(product.price) : Number(item.unitPrice);
+        const addonLines = item.addons && item.addons.length
+          ? item.addons.map(a => `<div>Tambahan / topping: ${a.name}${Number(a.price || 0) > 0 ? ' (+' + formatRp(a.price) + ')' : ''}</div>`).join('')
+          : '<div>Tambahan / topping: Tidak ada</div>';
+        return `<div class="checkout-order-row">
+          <div class="checkout-order-name">• ${item.title}</div>
+          <div>Jumlah: ${item.qty}x</div>
+          <div>Harga dasar: ${formatRp(basePrice)}</div>
+          ${addonLines}
+          <div><strong>Total produk: ${formatRp(Number(item.unitPrice) * Number(item.qty))}</strong></div>
+        </div>`;
+      }).join('');
+      const total = calculateTotals();
+      const totalEl = document.getElementById('checkoutReviewTotal');
+      if (totalEl) totalEl.textContent = formatRp(total);
+    }
+
+    function backToEditCart() {
+      closeModal('modalCheckout');
+      openCartModal();
+    }
+
     function goToCheckout() {
       if (cart.length === 0) return alert('Keranjang kosong! Silakan belanja dulu.');
-      renderCheckoutForm(); 
+      renderCheckoutForm();
+      renderCheckoutSummary();
       closeModal('modalCart');
       document.getElementById('modalCheckout').classList.add('open');
     }
@@ -996,14 +1024,15 @@
 
     async function goToPayment() {
       for (let i = 0; i < checkoutFields.length; i++) {
-          let f = checkoutFields[i];
-          let field = document.getElementById('co_' + f.id);
-          let val = field ? field.value.trim() : '';
+          const f = checkoutFields[i];
+          const field = document.getElementById('co_' + f.id);
+          const val = field ? field.value.trim() : '';
           if (f.req && !val) {
+              if (field) field.focus();
               return alert(`Harap isi ${f.label}!`);
           }
       }
-
+      renderCheckoutSummary();
       const qrisImage = document.getElementById('qrisDisplayFinal');
       try {
         qrisImage.src = await makeCenteredQrisCrop(storeQris);
@@ -1011,8 +1040,6 @@
         qrisImage.src = storeQris;
         console.warn('QRIS ditampilkan tanpa crop:', error);
       }
-      closeModal('modalCheckout');
-      document.getElementById('modalPayment').classList.add('open');
     }
 
     function confirmOrderWA() {

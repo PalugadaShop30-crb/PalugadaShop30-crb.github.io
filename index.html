@@ -1003,20 +1003,20 @@
       const qrisBox = document.getElementById('qrisBox');
       const qrisOption = document.getElementById('checkoutQrisOption');
       const qrisImage = document.getElementById('qrisDisplayFinal');
-      const shouldShow = qrisBox.hidden;
-      qrisBox.hidden = !shouldShow;
-      qrisOption.classList.toggle('selected', shouldShow);
-      qrisOption.setAttribute('aria-expanded', String(shouldShow));
-      if (!shouldShow) return;
+      // Pilihan QRIS hanya membuka sekali; setelah terbuka, ketukan berikutnya tidak menyembunyikannya.
+      if (!qrisBox.hidden) return;
+      qrisBox.hidden = false;
+      qrisOption.classList.add('selected');
+      qrisOption.setAttribute('aria-expanded', 'true');
+      qrisOption.disabled = true;
+      qrisOption.setAttribute('aria-disabled', 'true');
       calculateTotals();
       if (qrisImage.dataset.croppedFor === storeQris && qrisImage.src) return;
       qrisImage.src = storeQris;
       try {
         const cropped = await makeCenteredQrisCrop(storeQris);
-        if (!qrisBox.hidden) {
-          qrisImage.src = cropped;
-          qrisImage.dataset.croppedFor = storeQris;
-        }
+        qrisImage.src = cropped;
+        qrisImage.dataset.croppedFor = storeQris;
       } catch (error) {
         console.warn('QRIS ditampilkan dari gambar asli karena crop gagal:', error);
       }

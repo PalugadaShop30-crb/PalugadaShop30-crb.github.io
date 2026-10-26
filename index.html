@@ -130,7 +130,15 @@
     .checkout-customer-fields .form-group { margin-bottom: 16px; }
     .checkout-customer-fields .form-input { min-height: 54px; border-radius: 14px; font-size: 15px; }
     .checkout-payment-choice { padding: 22px 20px; background: #f8fafc; border-radius: 20px; margin-bottom: 18px; }
-    .checkout-payment-option { display: flex; align-items: center; gap: 16px; padding: 12px 8px; }
+    .checkout-payment-option { width: 100%; display: flex; align-items: center; gap: 16px; padding: 12px 8px; border: 0; border-radius: 14px; background: transparent; text-align: left; cursor: pointer; color: inherit; }
+    .checkout-payment-option.selected { background: #eef6ff; }
+    .checkout-payment-radio { width: 20px; height: 20px; flex: 0 0 20px; display: grid; place-items: center; border: 2px solid #94a3b8; border-radius: 50%; }
+    .checkout-payment-option.selected .checkout-payment-radio { border-color: #1683f8; }
+    .checkout-payment-radio span { width: 10px; height: 10px; border-radius: 50%; background: transparent; }
+    .checkout-payment-option.selected .checkout-payment-radio span { background: #1683f8; }
+    .checkout-qris-chevron { margin-left: auto; color: #64748b; transition: transform .2s ease; }
+    .checkout-payment-option.selected .checkout-qris-chevron { transform: rotate(180deg); }
+    #qrisBox[hidden] { display: none !important; }
     .checkout-payment-option input { width: 20px; height: 20px; accent-color: #1683f8; flex: 0 0 auto; }
     .checkout-payment-copy { display: flex; flex-direction: column; gap: 4px; }
     .checkout-payment-copy strong { font-size: 18px; font-weight: 600; color: #111827; }
@@ -393,10 +401,11 @@
 
         <section class="checkout-payment-choice">
           <h3>Pilih Pembayaran</h3>
-          <label class="checkout-payment-option">
-            <input type="radio" name="checkoutPaymentMethod" checked disabled />
+          <button type="button" id="checkoutQrisOption" class="checkout-payment-option" onclick="toggleQrisPayment()" aria-expanded="false" aria-controls="qrisBox">
+            <span class="checkout-payment-radio" aria-hidden="true"><span></span></span>
             <span class="checkout-payment-copy"><strong>QRIS</strong><small>Gunakan QRIS untuk pembayaran</small></span>
-          </label>
+            <i class="fa-solid fa-chevron-down checkout-qris-chevron" aria-hidden="true"></i>
+          </button>
         </section>
 
         <section id="qrisBox" class="qris-container checkout-qris-container">
@@ -974,19 +983,40 @@
       openCartModal();
     }
 
-    async function goToCheckout() {
+    function goToCheckout() {
       if (cart.length === 0) return alert('Keranjang kosong! Silakan belanja dulu.');
       renderCheckoutForm();
       renderCheckoutSummary();
       calculateTotals();
+      const qrisBox = document.getElementById('qrisBox');
+      const qrisOption = document.getElementById('checkoutQrisOption');
       const qrisImage = document.getElementById('qrisDisplayFinal');
-      // Buka halaman checkout segera; QRIS langsung tampil tanpa tombol pemicu tambahan.
-      qrisImage.src = storeQris;
+      qrisBox.hidden = true;
+      qrisImage.removeAttribute('src');
+      qrisOption.classList.remove('selected');
+      qrisOption.setAttribute('aria-expanded', 'false');
       closeModal('modalCart');
       document.getElementById('modalCheckout').classList.add('open');
+    }
+
+    async function toggleQrisPayment() {
+      const qrisBox = document.getElementById('qrisBox');
+      const qrisOption = document.getElementById('checkoutQrisOption');
+      const qrisImage = document.getElementById('qrisDisplayFinal');
+      const shouldShow = qrisBox.hidden;
+      qrisBox.hidden = !shouldShow;
+      qrisOption.classList.toggle('selected', shouldShow);
+      qrisOption.setAttribute('aria-expanded', String(shouldShow));
+      if (!shouldShow) return;
+      calculateTotals();
+      if (qrisImage.dataset.croppedFor === storeQris && qrisImage.src) return;
+      qrisImage.src = storeQris;
       try {
         const cropped = await makeCenteredQrisCrop(storeQris);
-        if (document.getElementById('modalCheckout').classList.contains('open')) qrisImage.src = cropped;
+        if (!qrisBox.hidden) {
+          qrisImage.src = cropped;
+          qrisImage.dataset.croppedFor = storeQris;
+        }
       } catch (error) {
         console.warn('QRIS ditampilkan dari gambar asli karena crop gagal:', error);
       }

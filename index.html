@@ -1158,7 +1158,6 @@
           if (error) throw error;
           document.getElementById('newCatName').value = '';
           await loadSharedData();
-          renderAdminCatSelect();
           notify('Kategori ditambahkan ke database!');
         } catch (error) { alert('Kategori gagal disimpan: ' + error.message); }
     }
@@ -1169,8 +1168,7 @@
             const { error } = await supabaseClient.from('categories').delete().eq('id', id);
             if (error) throw error;
             await loadSharedData();
-            renderAdminCatSelect();
-          } catch (error) { alert('Kategori gagal dihapus: ' + error.message); }
+            } catch (error) { alert('Kategori gagal dihapus: ' + error.message); }
         }
     }
 

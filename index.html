@@ -482,8 +482,29 @@
     </div>
   </div>
 
+  <div id="loginModal" class="modal-overlay" aria-label="Login admin">
+    <div class="modal-card" style="max-width:420px;">
+      <button class="modal-close" type="button" onclick="closeLoginModal()" aria-label="Tutup">&times;</button>
+      <h3 class="modal-title"><i class="fa-solid fa-shield-halved"></i> Login Admin PalugadaShop30</h3>
+      <form onsubmit="submitAdminLogin(event)">
+        <div class="form-group">
+          <label class="form-label" for="adminLoginEmail">Email admin</label>
+          <input id="adminLoginEmail" class="form-input" type="email" autocomplete="username" required placeholder="email-admin@contoh.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="adminLoginPassword">Kata sandi</label>
+          <input id="adminLoginPassword" class="form-input" type="password" autocomplete="current-password" required placeholder="Kata sandi akun admin">
+        </div>
+        <p id="adminLoginMessage" role="status" style="font-size:12px;color:#b91c1c;margin-bottom:12px;"></p>
+        <button id="adminLoginSubmit" type="submit" class="btn-buy"><i class="fa-solid fa-right-to-bracket"></i> Masuk sebagai Admin</button>
+        <p style="font-size:11px;color:#78716c;margin-top:12px;line-height:1.5;">Akun harus dibuat di Supabase dan ditambahkan ke daftar admin. Pendaftaran publik tidak digunakan.</p>
+      </form>
+    </div>
+  </div>
+
   <div id="toast">Notifikasi</div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // ==========================================
     // DATA DEFAULT AWAL
@@ -521,14 +542,17 @@
         { id: 'f_catatan', label: 'Catatan / Request', type: 'text', req: false }
     ];
 
-    // LOAD DATABASE DARI MEMORI HP/LAPTOP (VERSI 8)
-    let categories = JSON.parse(localStorage.getItem('palu_cats_v8')) || INITIAL_CATEGORIES;
-    let products = JSON.parse(localStorage.getItem('palu_products_v8')) || INITIAL_PRODUCTS;
-    let uiSettings = JSON.parse(localStorage.getItem('palu_ui_v8')) || INITIAL_UI;
-    let checkoutFields = JSON.parse(localStorage.getItem('palu_fields_v8')) || INITIAL_CHECKOUT_FIELDS;
-    let storeWA = localStorage.getItem('palu_wa_v8') || '6281234567890';
-    let adminPin = localStorage.getItem('palu_pin_v8') || '889900';
-    let storeQris = localStorage.getItem('palu_qris_v8') || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Belum-Ada-QRIS';
+    // DATA BERSAMA: Supabase PostgreSQL. localStorage hanya dibaca saat impor data lama.
+    const SUPABASE_URL = 'https://isyqjfnvammystqunaxe.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_8aadoXxeXFB2qeOq7KrFXg_MgfrWF8B';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    let categories = [...INITIAL_CATEGORIES];
+    let products = [...INITIAL_PRODUCTS];
+    let uiSettings = { ...INITIAL_UI };
+    let checkoutFields = [...INITIAL_CHECKOUT_FIELDS];
+    let storeWA = '6281234567890';
+    let storeQris = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Belum-Ada-QRIS';
+    let realtimeChannel = null;
 
     let cart = [];
     let discountAmount = 0;
@@ -858,25 +882,157 @@
     // ==========================================
     // SISTEM ADMIN & KOMPRES FOTO
     // ==========================================
-    function openAdmin() {
-      let isLoggedIn = localStorage.getItem('palu_logged_v8');
-      if (isLoggedIn === 'true') {
+    async function openAdmin() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        const { data: adminRow, error } = await supabaseClient
+          .from('admin_users').select('user_id').eq('user_id', session.user.id).maybeSingle();
+        if (!error && adminRow) {
           showAdminPanel();
-      } else {
-          const pin = prompt('Masukkan PIN rahasia Admin:');
-          if (pin === adminPin) {
-              localStorage.setItem('palu_logged_v8', 'true');
-              showAdminPanel();
-          } else if (pin !== null) {
-              alert('PIN Admin salah!');
-          }
+          return;
+        }
+      }
+      document.getElementById('adminLoginMessage').textContent = '';
+      document.getElementById('adminLoginPassword').value = '';
+      document.getElementById('loginModal').classList.add('open');
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModal').classList.remove('open');
+    }
+
+    async function submitAdminLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById('adminLoginEmail').value.trim();
+      const password = document.getElementById('adminLoginPassword').value;
+      const button = document.getElementById('adminLoginSubmit');
+      const message = document.getElementById('adminLoginMessage');
+      button.disabled = true;
+      message.style.color = '#78716c';
+      message.textContent = 'Memeriksa akun...';
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        const { data: adminRow, error: adminError } = await supabaseClient
+          .from('admin_users').select('user_id').eq('user_id', data.user.id).maybeSingle();
+        if (adminError || !adminRow) {
+          await supabaseClient.auth.signOut();
+          throw new Error('Akun ini belum diberi izin admin. Tambahkan user ID ke tabel admin_users melalui SQL Editor.');
+        }
+        closeLoginModal();
+        await offerLegacyImport();
+        await loadSharedData();
+        showAdminPanel();
+      } catch (error) {
+        message.style.color = '#b91c1c';
+        message.textContent = error.message || 'Login gagal. Periksa email dan kata sandi.';
+      } finally {
+        button.disabled = false;
       }
     }
 
-    function logoutAdmin() {
-        localStorage.removeItem('palu_logged_v8');
+    async function logoutAdmin() {
+        await supabaseClient.auth.signOut();
         closeAdmin();
         notify('Berhasil keluar dari Admin');
+    }
+
+    function rowToProduct(row) {
+      return {
+        id: String(row.id), title: row.title, cat: row.cat || '',
+        price: Number(row.price), orig: row.orig === null ? null : Number(row.orig),
+        badge: row.badge || '', desc: row.description || '', img: row.img || '',
+        addons: Array.isArray(row.addons) ? row.addons : []
+      };
+    }
+
+    function productToRow(product) {
+      return {
+        id: String(product.id), title: product.title, cat: product.cat || null,
+        price: Number(product.price), orig: product.orig === '' ? null : product.orig,
+        badge: product.badge || null, description: product.desc || '',
+        img: product.img || '', addons: product.addons || []
+      };
+    }
+
+    async function loadSharedData(shouldRender = true) {
+      const [catResult, productResult, settingsResult] = await Promise.all([
+        supabaseClient.from('categories').select('id,name').order('name'),
+        supabaseClient.from('products').select('*').order('created_at', { ascending: false }),
+        supabaseClient.from('store_settings').select('*').eq('id', 1).maybeSingle()
+      ]);
+      const failure = catResult.error || productResult.error || settingsResult.error;
+      if (failure) throw failure;
+      categories = (catResult.data || []).map(c => ({ id: c.id, name: c.name }));
+      products = (productResult.data || []).map(rowToProduct);
+      if (settingsResult.data) {
+        const settings = settingsResult.data;
+        uiSettings = { ...INITIAL_UI, ...(settings.ui_settings || {}) };
+        checkoutFields = Array.isArray(settings.checkout_fields) ? settings.checkout_fields : [...INITIAL_CHECKOUT_FIELDS];
+        storeWA = settings.store_wa || '6281234567890';
+        storeQris = settings.store_qris || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Belum-Ada-QRIS';
+      }
+      if (shouldRender) {
+        renderCategories();
+        applyUI();
+        document.getElementById('btnNavWA').href = 'https://wa.me/' + storeWA;
+        renderProducts();
+      }
+    }
+
+    async function persistStoreSettings() {
+      const { error } = await supabaseClient.from('store_settings').upsert({
+        id: 1, ui_settings: uiSettings, checkout_fields: checkoutFields,
+        store_wa: storeWA, store_qris: storeQris, updated_at: new Date().toISOString()
+      });
+      if (error) throw error;
+    }
+
+    function startRealtimeSync() {
+      if (realtimeChannel) return;
+      realtimeChannel = supabaseClient.channel('palugada-shared-data')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => loadSharedData().catch(console.error))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => loadSharedData().catch(console.error))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, () => loadSharedData().catch(console.error))
+        .subscribe();
+    }
+
+    async function offerLegacyImport() {
+      const keys = ['palu_cats_v8','palu_products_v8','palu_ui_v8','palu_fields_v8','palu_wa_v8','palu_qris_v8'];
+      const present = keys.some(key => localStorage.getItem(key) !== null);
+      if (!present || localStorage.getItem('palu_legacy_imported_v1') === 'true') return;
+      if (!confirm('Data toko lama ditemukan di browser ini. Impor ke database bersama sekarang? Data kategori/produk yang ada di database akan diganti dengan data lama dari browser ini.')) return;
+      try {
+        const oldCats = JSON.parse(localStorage.getItem('palu_cats_v8') || 'null');
+        const oldProducts = JSON.parse(localStorage.getItem('palu_products_v8') || 'null');
+        const oldUI = JSON.parse(localStorage.getItem('palu_ui_v8') || 'null');
+        const oldFields = JSON.parse(localStorage.getItem('palu_fields_v8') || 'null');
+        if (Array.isArray(oldCats)) {
+          const { error: deleteError } = await supabaseClient.from('categories').delete().neq('id', '__none__');
+          if (deleteError) throw deleteError;
+          if (oldCats.length) {
+            const { error } = await supabaseClient.from('categories').upsert(oldCats.map(c => ({id:String(c.id),name:c.name})));
+            if (error) throw error;
+          }
+        }
+        if (Array.isArray(oldProducts)) {
+          const { error: deleteError } = await supabaseClient.from('products').delete().neq('id', '__none__');
+          if (deleteError) throw deleteError;
+          if (oldProducts.length) {
+            const { error } = await supabaseClient.from('products').upsert(oldProducts.map(productToRow));
+            if (error) throw error;
+          }
+        }
+        if (oldUI) uiSettings = { ...INITIAL_UI, ...oldUI };
+        if (Array.isArray(oldFields)) checkoutFields = oldFields;
+        if (localStorage.getItem('palu_wa_v8') !== null) storeWA = localStorage.getItem('palu_wa_v8');
+        if (localStorage.getItem('palu_qris_v8') !== null) storeQris = localStorage.getItem('palu_qris_v8');
+        await persistStoreSettings();
+        localStorage.setItem('palu_legacy_imported_v1', 'true');
+        alert('Impor data lama selesai. Data sekarang tersimpan di database bersama.');
+      } catch (error) {
+        alert('Impor data lama gagal: ' + (error.message || error));
+      }
     }
 
     function showAdminPanel() {
@@ -980,24 +1136,28 @@
     }
 
     // -- LOGIKA KATEGORI ADMIN --
-    function addCategory() {
+    async function addCategory() {
         const name = document.getElementById('newCatName').value.trim();
         if(!name) return;
         const id = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        categories.push({ id, name });
-        localStorage.setItem('palu_cats_v8', JSON.stringify(categories));
-        document.getElementById('newCatName').value = '';
-        renderCategories();
-        renderAdminCatSelect();
-        notify('Kategori ditambahkan!');
+        try {
+          const { error } = await supabaseClient.from('categories').insert({ id, name });
+          if (error) throw error;
+          document.getElementById('newCatName').value = '';
+          await loadSharedData();
+          renderAdminCatSelect();
+          notify('Kategori ditambahkan ke database!');
+        } catch (error) { alert('Kategori gagal disimpan: ' + error.message); }
     }
 
-    function deleteCategory(id) {
+    async function deleteCategory(id) {
         if(confirm('Hapus kategori ini?')) {
-            categories = categories.filter(c => c.id !== id);
-            localStorage.setItem('palu_cats_v8', JSON.stringify(categories));
-            renderCategories();
+          try {
+            const { error } = await supabaseClient.from('categories').delete().eq('id', id);
+            if (error) throw error;
+            await loadSharedData();
             renderAdminCatSelect();
+          } catch (error) { alert('Kategori gagal dihapus: ' + error.message); }
         }
     }
 
@@ -1013,7 +1173,7 @@
         document.getElementById('adminAddonsContainer').appendChild(div);
     }
 
-    function saveAdminProduct() {
+    async function saveAdminProduct() {
       const id = document.getElementById('adminProdId').value;
       const title = document.getElementById('adminProdName').value;
       const cat = document.getElementById('adminProdCat').value;
@@ -1032,22 +1192,25 @@
           if(n) newAddons.push({name: n, price: p});
       });
 
+      let savedProduct;
       if (id) {
-        const idx = products.findIndex(p => p.id === id);
-        if (idx !== -1) {
-            if (!img) img = products[idx].img; 
-            products[idx] = { id, title, cat, price, orig, badge, desc, img, addons: newAddons };
-        }
+        const existing = products.find(p => p.id === id);
+        if (!img && existing) img = existing.img;
+        savedProduct = { id, title, cat, price, orig, badge, desc, img, addons: newAddons };
       } else {
         if (!img) img = 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400';
-        products.unshift({ id: Date.now().toString(), title, cat, price, orig, badge, desc, img, addons: newAddons });
+        savedProduct = { id: Date.now().toString(), title, cat, price, orig, badge, desc, img, addons: newAddons };
       }
-
-      localStorage.setItem('palu_products_v8', JSON.stringify(products));
-      resetProductForm();
-      renderAdminTable();
-      renderProducts();
-      notify('Produk berhasil disimpan!');
+      try {
+        const { error } = await supabaseClient.from('products').upsert(productToRow(savedProduct));
+        if (error) throw error;
+        await loadSharedData();
+        resetProductForm();
+        renderAdminTable();
+        notify('Produk berhasil disimpan ke database bersama!');
+      } catch (error) {
+        alert('Produk gagal disimpan: ' + error.message);
+      }
     }
 
     function editAdminProduct(id) {
@@ -1087,14 +1250,17 @@
       document.getElementById('adminAddonsContainer').innerHTML = '';
     }
 
-    function deleteAdminProduct(id) {
+    async function deleteAdminProduct(id) {
       if (confirm('Hapus produk ini permanen?')) {
-        products = products.filter(p => p.id !== id);
-        localStorage.setItem('palu_products_v8', JSON.stringify(products));
-        renderAdminTable();
-        renderProducts();
-        cart = cart.filter(c => c.productId !== id);
-        updateCartBadge();
+        try {
+          const { error } = await supabaseClient.from('products').delete().eq('id', id);
+          if (error) throw error;
+          await loadSharedData();
+          renderAdminTable();
+          cart = cart.filter(c => c.productId !== id);
+          updateCartBadge();
+          notify('Produk dihapus dari database.');
+        } catch (error) { alert('Produk gagal dihapus: ' + error.message); }
       }
     }
 
@@ -1126,7 +1292,7 @@
         renderAdminCheckoutFields();
     }
 
-    function saveCheckoutFields() {
+    async function saveCheckoutFields() {
         let newFields = [];
         let rows = document.querySelectorAll('#adminCheckoutFieldsContainer > div');
         rows.forEach((row, i) => {
@@ -1138,12 +1304,14 @@
             }
         });
         checkoutFields = newFields;
-        localStorage.setItem('palu_fields_v8', JSON.stringify(checkoutFields));
-        notify('Form Checkout Berhasil Disimpan!');
+        try {
+          await persistStoreSettings();
+          notify('Form checkout tersimpan di database bersama!');
+        } catch (error) { alert('Form checkout gagal disimpan: ' + error.message); }
     }
 
     // -- SIMPAN UI & SETTING --
-    function saveAdminUI() {
+    async function saveAdminUI() {
       uiSettings.promoLeft = document.getElementById('adUiPromoLeft').value;
       uiSettings.promoRight = document.getElementById('adUiPromoRight').value;
       uiSettings.headerName = document.getElementById('adUiHeaderName').value;
@@ -1157,28 +1325,38 @@
       let bgUpload = document.getElementById('adUiHeroBgBase64').value;
       if(bgUpload) uiSettings.heroBgImg = bgUpload;
 
-      localStorage.setItem('palu_ui_v8', JSON.stringify(uiSettings));
-      applyUI();
-      notify('Tampilan Web berhasil diubah!');
+      try {
+        await persistStoreSettings();
+        applyUI();
+        notify('Tampilan web tersimpan untuk semua pengunjung!');
+      } catch (error) { alert('Tampilan gagal disimpan: ' + error.message); }
     }
 
-    function saveAdminSetting() {
+    async function saveAdminSetting() {
       storeWA = document.getElementById('adminSettingWA').value.trim();
       let qrisUpload = document.getElementById('adminQrisImgBase64').value;
       if(qrisUpload) storeQris = qrisUpload;
       
-      localStorage.setItem('palu_wa_v8', storeWA);
-      localStorage.setItem('palu_qris_v8', storeQris);
-      document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;
-      notify('WA & QRIS berhasil diperbarui!');
+      try {
+        await persistStoreSettings();
+        document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;
+        notify('WhatsApp & QRIS tersimpan untuk semua pengunjung!');
+      } catch (error) { alert('Pengaturan gagal disimpan: ' + error.message); }
     }
 
-    // INISIALISASI
-    window.onload = () => {
+    // INISIALISASI: muat data dari database, lalu dengarkan perubahan bersama.
+    window.onload = async () => {
+      try {
+        await loadSharedData(false);
+      } catch (error) {
+        console.error('Supabase load failed:', error);
+        alert('Data database belum dapat dimuat. Pastikan migrasi SQL Supabase sudah dijalankan. Detail: ' + (error.message || error));
+      }
       renderCategories();
       applyUI();
       document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;
       renderProducts();
+      startRealtimeSync();
     };
   </script>
 </body>

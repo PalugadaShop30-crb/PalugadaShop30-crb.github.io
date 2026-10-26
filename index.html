@@ -334,7 +334,7 @@
             
             <div class="form-group">
                 <label class="form-label">Upload Foto Utama:</label>
-                <input type="file" accept="image/*" class="form-file" onchange="compressImage(event, 'adminProdImgBase64', 'imgPreview')" />
+                <input type="file" id="adminProdImgFile" accept="image/*" class="form-file" onchange="compressImage(event, 'adminProdImgBase64', 'imgPreview')" />
                 <input type="hidden" id="adminProdImgBase64" />
                 <img id="imgPreview" src="" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; border: 1px solid #ccc;" />
             </div>
@@ -826,7 +826,7 @@
         formContainer.innerHTML = checkoutFields.map(f => `
             <div class="form-group">
                 <label class="form-label">${f.label} ${f.req ? '<span style="color:#dc2626">*</span>' : ''}</label>
-                <input type="${f.type}" id="co_${f.id}" placeholder="Ketik di sini..." class="form-input" />
+                <input type="${f.type}" id="co_${f.id}" placeholder="Ketik di sini..." class="form-input" ${f.req ? 'required' : ''} />
             </div>
         `).join('');
     }
@@ -861,10 +861,16 @@
       }).join('\n\n');
 
       let buyerDataStr = '';
-      checkoutFields.forEach(f => {
-          let val = document.getElementById('co_' + f.id).value.trim();
+      for (const f of checkoutFields) {
+          const field = document.getElementById('co_' + f.id);
+          const val = field ? field.value.trim() : '';
+          if (f.req && !val) {
+              alert('Mohon isi kolom wajib: ' + f.label);
+              if (field) field.focus();
+              return;
+          }
           buyerDataStr += `- ${f.label}: ${val || '-'}\n`;
-      });
+      }
 
       let msg = `Halo Admin *${uiSettings.headerName}*, pesanan baru:\n\n` +
                 `*🛍️ RINCIAN PRODUK:*\n${productListText}\n\n` +
@@ -1060,6 +1066,10 @@
             document.getElementById('heroBgPreviewAdmin').src = uiSettings.heroBgImg;
             document.getElementById('heroBgPreviewAdmin').style.display = 'block';
             document.getElementById('adUiHeroBgBase64').value = uiSettings.heroBgImg;
+        } else {
+            document.getElementById('heroBgPreviewAdmin').removeAttribute('src');
+            document.getElementById('heroBgPreviewAdmin').style.display = 'none';
+            document.getElementById('adUiHeroBgBase64').value = '';
         }
 
         renderAdminTable();
@@ -1140,7 +1150,9 @@
     async function addCategory() {
         const name = document.getElementById('newCatName').value.trim();
         if(!name) return;
-        const id = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const id = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        if (!id) return alert('Nama kategori tidak valid. Gunakan huruf atau angka.');
+        if (categories.some(c => c.name.toLowerCase() === name.toLowerCase() || c.id === id)) return alert('Kategori dengan nama serupa sudah ada.');
         try {
           const { error } = await supabaseClient.from('categories').insert({ id, name });
           if (error) throw error;
@@ -1307,6 +1319,8 @@
         checkoutFields = newFields;
         try {
           await persistStoreSettings();
+          await loadSharedData();
+          renderAdminCheckoutFields();
           notify('Form checkout tersimpan di database bersama!');
         } catch (error) { alert('Form checkout gagal disimpan: ' + error.message); }
     }
@@ -1328,6 +1342,7 @@
 
       try {
         await persistStoreSettings();
+        await loadSharedData();
         applyUI();
         notify('Tampilan web tersimpan untuk semua pengunjung!');
       } catch (error) { alert('Tampilan gagal disimpan: ' + error.message); }
@@ -1340,6 +1355,7 @@
       
       try {
         await persistStoreSettings();
+        await loadSharedData();
         const waButton = document.getElementById('btnNavWA');
         if (waButton) waButton.href = `https://wa.me/${storeWA}`;
         notify('WhatsApp & QRIS tersimpan untuk semua pengunjung!');

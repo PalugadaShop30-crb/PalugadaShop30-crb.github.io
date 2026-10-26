@@ -341,6 +341,9 @@
         <div class="qris-crop-wrapper">
             <img id="qrisDisplayFinal" src="" class="qris-img" alt="Kode QRIS pembayaran" />
         </div>
+        <button type="button" onclick="downloadQrisOnly()" class="btn-buy" style="max-width:290px;margin:12px auto 0;background:#1d4ed8;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <i class="fa-solid fa-download"></i> Download QRIS saja
+        </button>
         <p class="payment-secure-note"><i class="fa-solid fa-shield-halved"></i> Pastikan nama merchant dan nominal sesuai sebelum membayar.</p>
         
         <ol class="payment-instructions">
@@ -892,16 +895,63 @@
       document.getElementById('modalCheckout').classList.add('open');
     }
 
-    function goToPayment() {
+    // Buat tampilan dan file unduhan dari potongan tengah gambar QRIS.
+    function makeCenteredQrisCrop(source, cropRatio = 0.9) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = function() {
+          const side = Math.floor(Math.min(img.naturalWidth, img.naturalHeight) * cropRatio);
+          if (!side) return reject(new Error('Gambar QRIS tidak valid.'));
+          const sx = Math.floor((img.naturalWidth - side) / 2);
+          const sy = Math.floor((img.naturalHeight - side) / 2);
+          const canvas = document.createElement('canvas');
+          canvas.width = side;
+          canvas.height = side;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return reject(new Error('Gagal memproses gambar QRIS.'));
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, side, side);
+          ctx.drawImage(img, sx, sy, side, side, 0, 0, side, side);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => reject(new Error('Gambar QRIS tidak bisa dibaca.'));
+        img.src = source;
+      });
+    }
+
+    async function downloadQrisOnly() {
+      try {
+        const source = storeQris || document.getElementById('qrisDisplayFinal').src;
+        if (!source) return alert('Gambar QRIS belum tersedia.');
+        const cropped = await makeCenteredQrisCrop(source);
+        const link = document.createElement('a');
+        link.href = cropped;
+        link.download = 'QRIS-Palugada-Shop.png';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (error) {
+        alert('QRIS gagal diunduh: ' + error.message);
+      }
+    }
+
+    async function goToPayment() {
       for (let i = 0; i < checkoutFields.length; i++) {
           let f = checkoutFields[i];
-          let val = document.getElementById('co_' + f.id).value.trim();
+          let field = document.getElementById('co_' + f.id);
+          let val = field ? field.value.trim() : '';
           if (f.req && !val) {
               return alert(`Harap isi ${f.label}!`);
           }
       }
 
-      document.getElementById('qrisDisplayFinal').src = storeQris;
+      const qrisImage = document.getElementById('qrisDisplayFinal');
+      try {
+        qrisImage.src = await makeCenteredQrisCrop(storeQris);
+      } catch (error) {
+        qrisImage.src = storeQris;
+        console.warn('QRIS ditampilkan tanpa crop:', error);
+      }
       closeModal('modalCheckout');
       document.getElementById('modalPayment').classList.add('open');
     }

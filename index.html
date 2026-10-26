@@ -975,7 +975,8 @@
       if (shouldRender) {
         renderCategories();
         applyUI();
-        document.getElementById('btnNavWA').href = 'https://wa.me/' + storeWA;
+        const waButton = document.getElementById('btnNavWA');
+        if (waButton) waButton.href = 'https://wa.me/' + storeWA;
         renderProducts();
       }
     }
@@ -1339,7 +1340,8 @@
       
       try {
         await persistStoreSettings();
-        document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;
+        const waButton = document.getElementById('btnNavWA');
+        if (waButton) waButton.href = `https://wa.me/${storeWA}`;
         notify('WhatsApp & QRIS tersimpan untuk semua pengunjung!');
       } catch (error) { alert('Pengaturan gagal disimpan: ' + error.message); }
     }
@@ -1354,7 +1356,8 @@
       }
       renderCategories();
       applyUI();
-      document.getElementById('btnNavWA').href = `https://wa.me/${storeWA}`;
+      const waButton = document.getElementById('btnNavWA');
+        if (waButton) waButton.href = `https://wa.me/${storeWA}`;
       renderProducts();
       startRealtimeSync();
     };

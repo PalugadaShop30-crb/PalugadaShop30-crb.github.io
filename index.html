@@ -1097,6 +1097,8 @@
       const bagFeeEl = document.getElementById('cartShoppingBagFee');
       if (bagFeeEl) bagFeeEl.innerText = formatRp(shoppingBagSelected ? SHOPPING_BAG_FEE : 0);
       document.getElementById('cartTotal').innerText = formatRp(finalTotal);
+      const checkoutTotalEl = document.getElementById('checkoutReviewTotal');
+      if (checkoutTotalEl) checkoutTotalEl.innerText = formatRp(finalTotal);
       
       document.getElementById('finalTotalPay').innerText = formatRp(finalTotal);
       document.getElementById('txtNominalBawah').innerText = formatRp(finalTotal);

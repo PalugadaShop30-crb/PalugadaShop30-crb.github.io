@@ -98,6 +98,19 @@
     .cart-edit-btn { margin-top: 8px; padding: 7px 9px; border: 1px solid #fed7aa; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 700; cursor: pointer; }
     .cart-item-info { min-width: 0; }
     .cart-item-title { overflow-wrap: anywhere; }
+    .outlets-section { padding:26px 0;background:#fffaf3;border-top:1px solid #f3e8d7;border-bottom:1px solid #f3e8d7; }
+    .outlets-heading { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px; }
+    .outlets-heading h2 { margin:0 0 6px;font-size:22px;font-weight:800;color:#292524; }
+    .outlets-heading p { margin:0;color:#78716c;font-size:13px; }
+    .outlets-eyebrow { color:#b45309 !important;font-size:10px !important;font-weight:800;letter-spacing:1.8px;margin-bottom:6px !important; }
+    .outlets-heading-icon { display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border-radius:16px;background:#ffedd5;color:#c2410c;font-size:22px; }
+    .outlets-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px; }
+    .outlet-card { padding:16px;border:1px solid #e7e5e4;border-radius:16px;background:white;box-shadow:0 4px 14px rgba(41,37,36,.04); }
+    .outlet-card h3 { margin:0 0 8px;font-size:15px;font-weight:800;color:#292524; }
+    .outlet-address { display:flex;align-items:flex-start;gap:8px;color:#57534e;font-size:12px;line-height:1.6;white-space:pre-line; }
+    .outlet-address i { margin-top:3px;color:#d97706; }
+    .outlet-note { margin:10px 0 0;padding:9px 10px;border-radius:10px;background:#fff7ed;color:#9a3412;font-size:11px;line-height:1.5; }
+    .outlet-empty { padding:16px;border:1px dashed #d6d3d1;border-radius:14px;color:#78716c;background:#fff;text-align:center;font-size:13px; }
     .checkout-overlay { align-items: stretch; }
     .checkout-card {
       display: flex;
@@ -304,6 +317,13 @@
     </div>
   </section>
 
+  <section class="outlets-section" id="outletsSection">
+    <div class="container">
+      <div class="outlets-heading"><div><p class="outlets-eyebrow">PICK UP / TAKE AWAY</p><h2>Gerai & Outlet Pengambilan</h2><p>Pilih gerai untuk mengambil pesanan Anda.</p></div><span class="outlets-heading-icon"><i class="fa-solid fa-store"></i></span></div>
+      <div id="outletsList" class="outlets-grid"></div>
+    </div>
+  </section>
+
   <!-- KATALOG PRODUK -->
   <main class="container">
     <div class="cat-bar" id="catBar">
@@ -454,6 +474,7 @@
         <button onclick="switchAdminTab('tabUI')" class="admin-tab" id="btnTabUI">Teks & Banner</button>
         <button onclick="switchAdminTab('tabForm')" class="admin-tab" id="btnTabForm">Form Checkout</button>
         <button onclick="switchAdminTab('tabSetting')" class="admin-tab" id="btnTabSetting">WA & QRIS</button>
+        <button onclick="switchAdminTab('tabOutlets')" class="admin-tab" id="btnTabOutlets">Gerai / Outlet</button>
       </div>
 
       <!-- TAB 1: KELOLA PRODUK -->
@@ -584,6 +605,19 @@
         </div>
       </div>
 
+      <div id="tabOutlets" style="display:none;">
+        <div style="background:#fff;padding:16px;border-radius:16px;border:1px solid #e7e5e4;">
+          <div class="admin-section-title"><i class="fa-solid fa-store"></i> Kelola Gerai / Outlet Take Away</div>
+          <p style="font-size:12px;color:#57534e;margin-bottom:14px;">Nama dan alamat yang disimpan akan tampil di halaman awal untuk semua pengunjung.</p>
+          <input type="hidden" id="adminOutletEditIndex" value="-1" />
+          <div class="form-group"><label class="form-label">Nama Gerai / Outlet</label><input id="adminOutletName" class="form-input" placeholder="Contoh: Palugada Shop30 - Outlet Tasikmalaya" /></div>
+          <div class="form-group"><label class="form-label">Alamat Lengkap Outlet</label><textarea id="adminOutletAddress" class="form-input" rows="3" placeholder="Nama jalan, nomor, kecamatan, kota"></textarea></div>
+          <div class="form-group"><label class="form-label">Catatan Pengambilan (opsional)</label><input id="adminOutletNote" class="form-input" placeholder="Contoh: Ambil di kasir, sebutkan nama pemesan" /></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"><button type="button" onclick="saveOutlet()" class="btn-buy" style="flex:1;">Simpan Gerai</button><button type="button" onclick="resetOutletForm()" style="border:1px solid #d6d3d1;background:#fff;border-radius:10px;padding:10px 14px;font-weight:700;">Kosongkan Form</button></div>
+          <div class="admin-section-title">Daftar Gerai Tersimpan</div><div id="adminOutletsList"></div>
+        </div>
+      </div>
+
       <!-- TAB 5: WA & QRIS -->
       <div id="tabSetting" style="display: none;">
         <div style="background: #fff; padding: 16px; border-radius: 16px; border: 1px solid #e7e5e4;">
@@ -663,7 +697,8 @@
       heroSub: "Pusat belanja digital paling murah dan aman. Diproses kilat ke WhatsApp!",
       guaranteeTitle: "Garansi Pelayanan:",
       guaranteeList: "✅ Proses Otomatis & Cepat\n✅ Harga Termurah se-Indonesia\n✅ Mendukung Pembayaran QRIS",
-      waBtn: "Kirim Bukti Bayar ke WA"
+      waBtn: "Kirim Bukti Bayar ke WA",
+      outlets: []
     };
 
     const INITIAL_CHECKOUT_FIELDS = [
@@ -734,6 +769,7 @@
       
       document.getElementById('uiWaBtn').innerText = uiSettings.waBtn;
       document.title = uiSettings.headerName + " - Online Shop";
+      renderOutlets();
     }
 
     function generateProductCard(item) {
@@ -1383,6 +1419,7 @@ ${addonLines}
     }
 
     function showAdminPanel() {
+        renderAdminOutlets();
         switchAdminTab('tabProduk');
         
         // Isi Form WA & QRIS
@@ -1423,7 +1460,7 @@ ${addonLines}
     }
 
     function switchAdminTab(tabId) {
-        ['tabProduk', 'tabKategori', 'tabUI', 'tabForm', 'tabSetting'].forEach(id => {
+        ['tabProduk', 'tabKategori', 'tabUI', 'tabForm', 'tabSetting', 'tabOutlets'].forEach(id => {
             document.getElementById(id).style.display = 'none';
         });
         document.getElementById(tabId).style.display = 'block';
@@ -1684,6 +1721,43 @@ ${addonLines}
         applyUI();
         notify('Tampilan web tersimpan untuk semua pengunjung!');
       } catch (error) { alert('Tampilan gagal disimpan: ' + error.message); }
+    }
+
+    function escapeOutletText(value) {
+      return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    }
+    function renderOutlets() {
+      const list = document.getElementById('outletsList');
+      if (!list) return;
+      const outlets = Array.isArray(uiSettings.outlets) ? uiSettings.outlets : [];
+      list.innerHTML = outlets.length ? outlets.map(outlet => `<article class="outlet-card"><h3><i class="fa-solid fa-store" style="color:#d97706;margin-right:6px;"></i>${escapeOutletText(outlet.name)}</h3><div class="outlet-address"><i class="fa-solid fa-location-dot"></i><span>${escapeOutletText(outlet.address)}</span></div>${outlet.note ? `<div class="outlet-note"><i class="fa-solid fa-circle-info"></i> ${escapeOutletText(outlet.note)}</div>` : ''}<div style="margin-top:12px;font-size:11px;color:#78716c;font-weight:700;"><i class="fa-solid fa-bag-shopping"></i> Pengambilan pesanan / Take Away</div></article>`).join('') : '<div class="outlet-empty"><i class="fa-solid fa-store"></i><p style="margin:8px 0 0;font-weight:700;">Informasi gerai segera hadir.</p><p style="margin:4px 0 0;">Gerai akan ditampilkan setelah ditambahkan melalui panel admin.</p></div>';
+    }
+    function renderAdminOutlets() {
+      const list = document.getElementById('adminOutletsList'); if (!list) return;
+      const outlets = Array.isArray(uiSettings.outlets) ? uiSettings.outlets : [];
+      list.innerHTML = outlets.length ? outlets.map((o,i) => `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid #e7e5e4;"><div style="min-width:0;"><strong>${escapeOutletText(o.name)}</strong><div style="font-size:12px;color:#57534e;white-space:pre-line;margin-top:4px;">${escapeOutletText(o.address)}</div>${o.note ? `<small style="color:#78716c;">${escapeOutletText(o.note)}</small>` : ''}</div><div style="display:flex;gap:5px;flex-shrink:0;"><button type="button" onclick="editOutlet(${i})" style="padding:7px 9px;border:0;border-radius:8px;background:#dbeafe;color:#1d4ed8;"><i class="fa-solid fa-pen"></i></button><button type="button" onclick="deleteOutlet(${i})" style="padding:7px 9px;border:0;border-radius:8px;background:#fee2e2;color:#b91c1c;"><i class="fa-solid fa-trash"></i></button></div></div>`).join('') : '<p style="font-size:12px;color:#78716c;">Belum ada gerai.</p>';
+    }
+    function resetOutletForm() {
+      document.getElementById('adminOutletEditIndex').value='-1'; document.getElementById('adminOutletName').value=''; document.getElementById('adminOutletAddress').value=''; document.getElementById('adminOutletNote').value='';
+    }
+    function editOutlet(i) {
+      const o=(uiSettings.outlets||[])[i]; if(!o)return;
+      document.getElementById('adminOutletEditIndex').value=String(i);document.getElementById('adminOutletName').value=o.name||'';document.getElementById('adminOutletAddress').value=o.address||'';document.getElementById('adminOutletNote').value=o.note||'';
+    }
+    async function saveOutlet() {
+      const name=document.getElementById('adminOutletName').value.trim(), address=document.getElementById('adminOutletAddress').value.trim(), note=document.getElementById('adminOutletNote').value.trim();
+      if(!name||!address)return alert('Nama gerai dan alamat wajib diisi.');
+      const outlets=Array.isArray(uiSettings.outlets)?[...uiSettings.outlets]:[], i=Number(document.getElementById('adminOutletEditIndex').value);
+      if(i>=0&&i<outlets.length)outlets[i]={name,address,note};else outlets.push({name,address,note});
+      uiSettings.outlets=outlets;
+      try { await persistStoreSettings(); await loadSharedData(); renderAdminOutlets(); resetOutletForm(); notify('Gerai tersimpan untuk semua pengunjung!'); }
+      catch(e){alert('Gerai gagal disimpan: '+e.message);}
+    }
+    async function deleteOutlet(i) {
+      const outlets=Array.isArray(uiSettings.outlets)?[...uiSettings.outlets]:[]; if(!outlets[i])return;
+      if(!confirm('Hapus gerai ini?'))return; outlets.splice(i,1);uiSettings.outlets=outlets;
+      try { await persistStoreSettings(); await loadSharedData(); renderAdminOutlets(); notify('Gerai dihapus.'); }
+      catch(e){alert('Gerai gagal dihapus: '+e.message);}
     }
 
     async function saveAdminSetting() {

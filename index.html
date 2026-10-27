@@ -557,9 +557,11 @@
 
             <div class="form-group"><input type="text" id="adminProdName" placeholder="Nama Menu / Voucher" class="form-input" /></div>
             <div class="form-group">
+                <label class="form-label" for="adminProdCat">Kategori Produk (Opsional)</label>
                 <select id="adminProdCat" class="form-input">
                     <!-- Kategori akan dirender disini -->
                 </select>
+                <p style="font-size:11px;line-height:1.5;color:#78716c;margin-top:5px;">Pilih kategori jika produk ingin tampil di kategori tersebut. Pilih "Tanpa kategori" jika produk hanya ingin ditampilkan lewat Label Promo atau bagian Lainnya.</p>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div class="form-group"><input type="number" id="adminProdPrice" placeholder="Harga Jual (Rp)" class="form-input" /></div>
@@ -811,7 +813,9 @@
             categories.map(c => `<button onclick="filterCat('${c.id}', this)" class="cat-btn">${c.name}</button>`).join('');
         
         const adminCatSelect = document.getElementById('adminProdCat');
-        adminCatSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        const selectedCategory = adminCatSelect.value;
+        adminCatSelect.innerHTML = '<option value="">Tanpa kategori</option>' + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        if (categories.some(c => String(c.id) === String(selectedCategory))) adminCatSelect.value = selectedCategory;
 
         const adminCatList = document.getElementById('adminCatList');
         adminCatList.innerHTML = categories.map(c => `

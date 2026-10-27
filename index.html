@@ -493,7 +493,7 @@
           </button>
         </section>
 
-        <section id="qrisBox" class="qris-container checkout-qris-container">
+        <section id="qrisBox" class="qris-container checkout-qris-container" hidden>
           <h3 class="checkout-qris-title">Pembayaran QRIS</h3>
           <p class="checkout-qris-merchant">PALUGADA SHOP30</p>
           <div class="qris-crop-wrapper">
@@ -1253,20 +1253,30 @@
       const qrisBox = document.getElementById('qrisBox');
       const qrisOption = document.getElementById('checkoutQrisOption');
       const qrisImage = document.getElementById('qrisDisplayFinal');
-      // Tombol tetap aktif: ketukan berulang memastikan panel/gambar QRIS tetap tersedia.
+      if (!qrisBox || !qrisOption || !qrisImage) return;
+
+      // QRIS boleh dibuka berkali-kali; jangan mengunci tombol saat gambar sedang diproses.
       qrisBox.hidden = false;
       qrisOption.classList.add('selected');
       qrisOption.setAttribute('aria-expanded', 'true');
       qrisOption.disabled = false;
+      qrisOption.removeAttribute('disabled');
       qrisOption.removeAttribute('aria-disabled');
       calculateTotals();
-      if (qrisImage.dataset.croppedFor === storeQris && qrisImage.src) return;
+
+      // Jika sumber QRIS berubah atau gambar belum siap, muat ulang; jika sama, biarkan panel tetap terbuka.
+      if (qrisImage.dataset.croppedFor === storeQris && qrisImage.complete && qrisImage.naturalWidth > 0) return;
+      qrisImage.dataset.croppedFor = '';
       qrisImage.src = storeQris;
       try {
         const cropped = await makeCenteredQrisCrop(storeQris);
-        qrisImage.src = cropped;
-        qrisImage.dataset.croppedFor = storeQris;
+        // Jangan menimpa QRIS yang lebih baru bila pengguna mengetuk ulang selama proses crop.
+        if (storeQris) {
+          qrisImage.src = cropped;
+          qrisImage.dataset.croppedFor = storeQris;
+        }
       } catch (error) {
+        qrisImage.src = storeQris;
         console.warn('QRIS ditampilkan dari gambar asli karena crop gagal:', error);
       }
     }
@@ -1413,10 +1423,9 @@ ${addonLines}
         : 'Gerai / outlet: Belum dipilih\\n';
       if ((Array.isArray(uiSettings.outlets) ? uiSettings.outlets : []).length && !selectedOutlet) {
         alert('Pilih gerai / outlet terlebih dahulu sebelum konfirmasi pesanan.');
-        const list = document.getElementById('outletsList');
-        const toggle = document.getElementById('outletsToggle');
-        if (list) list.hidden = false;
-        if (toggle) { toggle.setAttribute('aria-expanded', 'true'); toggle.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        // Buka pemilih outlet yang benar di atas checkout, tanpa menutup checkout,
+        // mengosongkan keranjang, atau mereset pilihan QRIS.
+        toggleOutletChoices();
         return;
       }
 

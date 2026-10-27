@@ -106,6 +106,26 @@
     .outlets-section:has(#outletsList[hidden]) .outlets-heading-title { font-size:15px; }
     .outlets-section:has(#outletsList[hidden]) .outlets-heading-sub { font-size:11px; }
     .outlets-section:has(#outletsList[hidden]) .outlets-eyebrow { display:none; }
+    .outlets-section { padding:8px 0;background:#faf8f5;border:0; }
+    .outlets-section .container { max-width:980px; }
+    .outlet-current-card { display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;border:1px solid #e7e5e4;border-radius:18px;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.05);text-align:left;cursor:pointer;color:#292524; }
+    .outlet-current-icon { display:grid;place-items:center;flex:0 0 54px;height:54px;border:1px solid #fde68a;border-radius:16px;background:#fffbeb;color:#b45309;font-size:22px; }
+    .outlet-current-copy { display:flex;flex:1;min-width:0;flex-direction:column;gap:4px; }
+    .outlet-current-badge { align-self:flex-start;padding:4px 9px;border:1px solid #e7e5e4;border-radius:999px;background:#f5f5f4;color:#57534e;font-size:10px;font-weight:800;letter-spacing:.6px; }
+    .outlet-current-copy strong { overflow-wrap:anywhere;font-size:16px;line-height:1.3;font-weight:800; }
+    .outlet-current-copy #selectedOutletSummary { overflow-wrap:anywhere;color:#78716c;font-size:12px;line-height:1.4; }
+    .outlet-change-button { display:flex;align-items:center;gap:6px;flex:0 0 auto;padding:10px 12px;border:1px solid #e7e5e4;border-radius:13px;background:#fafaf9;font-size:13px;font-weight:800; }
+    .outlet-change-button i { font-size:10px;color:#78716c; }
+    .outlet-picker-backdrop[hidden] { display:none !important; }
+    .outlet-picker-backdrop { position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.55); }
+    .outlet-picker-dialog { display:flex;flex-direction:column;width:100%;max-width:620px;max-height:min(82dvh,760px);overflow:hidden;padding:20px;border-radius:26px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.25); }
+    .outlet-picker-header { display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid #eee; }
+    .outlet-picker-header h2 { margin:0;font-size:18px;font-weight:800;color:#292524; }
+    .outlet-picker-close { display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border:0;border-radius:50%;background:#f5f5f4;color:#78716c;font-size:18px; }
+    .outlet-picker-subtitle { margin:12px 0 16px;color:#78716c;font-size:13px; }
+    .outlet-picker-list { min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:1px 3px 5px 1px;grid-template-columns:1fr; }
+    .outlet-picker-list .outlet-card { padding:16px;border-radius:20px; }
+    @media(max-width:480px) { .outlet-current-card { gap:10px;padding:11px; } .outlet-current-icon { flex-basis:46px;height:46px; } .outlet-current-copy strong { font-size:14px; } .outlet-change-button { padding:9px;font-size:12px; } .outlet-picker-dialog { padding:16px;border-radius:24px; } }
     .outlets-heading { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px; }
     .outlets-heading h2 { margin:0 0 6px;font-size:22px;font-weight:800;color:#292524; }
     .outlets-heading p { margin:0;color:#78716c;font-size:13px; }
@@ -335,13 +355,28 @@
 
   <section class="outlets-section" id="outletsSection">
     <div class="container">
-      <button type="button" class="outlets-heading outlets-toggle" id="outletsToggle" onclick="toggleOutletChoices()" aria-expanded="false" aria-controls="outletsList">
-        <span class="outlets-heading-copy"><span class="outlets-heading-title"><i class="fa-solid fa-location-dot" style="color:#d97706;margin-right:7px;"></i><span id="selectedOutletTitle">Pilih Gerai / Outlet</span></span><span class="outlets-heading-sub" id="selectedOutletSummary">Ketuk untuk memilih lokasi pengambilan</span></span>
-        <span class="outlets-heading-icon"><i class="fa-solid fa-store"></i><i class="fa-solid fa-chevron-down outlets-chevron" id="outletsChevron"></i></span>
+      <button type="button" class="outlet-current-card" id="outletsToggle" onclick="toggleOutletChoices()" aria-expanded="false" aria-controls="outletPickerModal">
+        <span class="outlet-current-icon"><i class="fa-solid fa-store"></i></span>
+        <span class="outlet-current-copy">
+          <span class="outlet-current-badge">TAKE AWAY</span>
+          <strong id="selectedOutletTitle">Pilih Gerai / Outlet</strong>
+          <span id="selectedOutletSummary">Ketuk untuk memilih lokasi pengambilan</span>
+        </span>
+        <span class="outlet-change-button" id="outletChangeButton">Ganti <i class="fa-solid fa-chevron-right"></i></span>
       </button>
-      <div id="outletsList" class="outlets-grid" hidden></div>
     </div>
   </section>
+
+  <div class="outlet-picker-backdrop" id="outletPickerModal" hidden onclick="if(event.target===this)closeOutletPicker()">
+    <section class="outlet-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="outletPickerTitle">
+      <header class="outlet-picker-header">
+        <h2 id="outletPickerTitle"><i class="fa-solid fa-store" style="color:#b45309;margin-right:8px;"></i>Pilih Gerai / Outlet</h2>
+        <button type="button" class="outlet-picker-close" onclick="closeOutletPicker()" aria-label="Tutup pilihan gerai"><i class="fa-solid fa-xmark"></i></button>
+      </header>
+      <p class="outlet-picker-subtitle">Pilih lokasi pengambilan pesanan Anda.</p>
+      <div id="outletsList" class="outlets-grid outlet-picker-list"></div>
+    </section>
+  </div>
 
   <!-- KATALOG PRODUK -->
   <main class="container">
@@ -1770,12 +1805,20 @@ ${addonLines}
       return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     }
     function toggleOutletChoices() {
-      const list = document.getElementById('outletsList');
+      const modal = document.getElementById('outletPickerModal');
       const toggle = document.getElementById('outletsToggle');
-      if (!list || !toggle) return;
-      const willOpen = list.hidden;
-      list.hidden = !willOpen;
-      toggle.setAttribute('aria-expanded', String(willOpen));
+      if (!modal) return;
+      modal.hidden = false;
+      if (toggle) toggle.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeOutletPicker() {
+      const modal = document.getElementById('outletPickerModal');
+      const toggle = document.getElementById('outletsToggle');
+      if (modal) modal.hidden = true;
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
     }
 
     function selectOutlet(index) {
@@ -1784,12 +1827,7 @@ ${addonLines}
       if (!outlet) return;
       selectedOutlet = { name: outlet.name || '', address: outlet.address || '', note: outlet.note || '' };
       renderOutlets();
-      const list = document.getElementById('outletsList');
-      const toggle = document.getElementById('outletsToggle');
-      const summary = document.getElementById('selectedOutletSummary');
-      if (summary) summary.textContent = selectedOutlet.name + ' — ' + selectedOutlet.address;
-      if (list) list.hidden = true;
-      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      closeOutletPicker();
     }
 
     function renderOutlets() {
@@ -1799,8 +1837,10 @@ ${addonLines}
       if (selectedOutlet && !outlets.some(o => o.name === selectedOutlet.name && o.address === selectedOutlet.address)) selectedOutlet = null;
       const summary = document.getElementById('selectedOutletSummary');
       const title = document.getElementById('selectedOutletTitle');
+      const changeButton = document.getElementById('outletChangeButton');
       if (title) title.textContent = selectedOutlet ? selectedOutlet.name : 'Pilih Gerai / Outlet';
       if (summary) summary.textContent = selectedOutlet ? selectedOutlet.address : 'Ketuk untuk memilih lokasi pengambilan';
+      if (changeButton) changeButton.innerHTML = selectedOutlet ? 'Ganti <i class="fa-solid fa-chevron-right"></i>' : 'Pilih <i class="fa-solid fa-chevron-right"></i>';
       list.innerHTML = outlets.length ? outlets.map((outlet, index) => {
         const isSelected = selectedOutlet && selectedOutlet.name === outlet.name && selectedOutlet.address === outlet.address;
         return `<button type="button" class="outlet-card${isSelected ? ' selected' : ''}" onclick="selectOutlet(${index})" aria-pressed="${Boolean(isSelected)}"><h3><i class="fa-solid fa-store" style="color:#d97706;margin-right:6px;"></i>${escapeOutletText(outlet.name)}</h3><div class="outlet-address"><i class="fa-solid fa-location-dot"></i><span>${escapeOutletText(outlet.address)}</span></div>${outlet.note ? `<div class="outlet-note"><i class="fa-solid fa-circle-info"></i> ${escapeOutletText(outlet.note)}</div>` : ''}<div style="margin-top:12px;font-size:11px;color:#78716c;font-weight:700;"><i class="fa-solid fa-bag-shopping"></i> Pengambilan pesanan / Take Away</div>${isSelected ? '<span class="outlet-selected-label"><i class="fa-solid fa-check"></i> Gerai dipilih</span>' : ''}</button>`;

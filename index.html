@@ -111,6 +111,15 @@
     .outlet-address i { margin-top:3px;color:#d97706; }
     .outlet-note { margin:10px 0 0;padding:9px 10px;border-radius:10px;background:#fff7ed;color:#9a3412;font-size:11px;line-height:1.5; }
     .outlet-empty { padding:16px;border:1px dashed #d6d3d1;border-radius:14px;color:#78716c;background:#fff;text-align:center;font-size:13px; }
+    .outlets-toggle { width:100%;padding:0;border:0;background:transparent;text-align:left;cursor:pointer;color:inherit; }
+    .outlets-heading-copy { display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0; }
+    .outlets-heading-title { font-size:22px;font-weight:800;color:#292524; }
+    .outlets-heading-sub { font-size:13px;color:#78716c; }
+    .outlets-chevron { font-size:14px;margin-left:7px;transition:transform .2s; }
+    .outlets-toggle[aria-expanded="true"] .outlets-chevron { transform:rotate(180deg); }
+    .outlet-card { width:100%;text-align:left;cursor:pointer;color:inherit;font:inherit; }
+    .outlet-card.selected { border:2px solid #d97706;background:#fff7ed; }
+    .outlet-selected-label { display:inline-block;margin-top:10px;padding:4px 8px;border-radius:999px;background:#ffedd5;color:#9a3412;font-size:11px;font-weight:800; }
     .checkout-overlay { align-items: stretch; }
     .checkout-card {
       display: flex;
@@ -319,8 +328,11 @@
 
   <section class="outlets-section" id="outletsSection">
     <div class="container">
-      <div class="outlets-heading"><div><p class="outlets-eyebrow">PICK UP / TAKE AWAY</p><h2>Gerai & Outlet Pengambilan</h2><p>Pilih gerai untuk mengambil pesanan Anda.</p></div><span class="outlets-heading-icon"><i class="fa-solid fa-store"></i></span></div>
-      <div id="outletsList" class="outlets-grid"></div>
+      <button type="button" class="outlets-heading outlets-toggle" id="outletsToggle" onclick="toggleOutletChoices()" aria-expanded="false" aria-controls="outletsList">
+        <span class="outlets-heading-copy"><span class="outlets-eyebrow">PICK UP / TAKE AWAY</span><span class="outlets-heading-title">Pilih Gerai / Outlet</span><span class="outlets-heading-sub" id="selectedOutletSummary">Ketuk di sini untuk melihat pilihan gerai</span></span>
+        <span class="outlets-heading-icon"><i class="fa-solid fa-store"></i><i class="fa-solid fa-chevron-down outlets-chevron" id="outletsChevron"></i></span>
+      </button>
+      <div id="outletsList" class="outlets-grid" hidden></div>
     </div>
   </section>
 
@@ -717,6 +729,7 @@
     let checkoutFields = [...INITIAL_CHECKOUT_FIELDS];
     let storeWA = '6281234567890';
     let storeQris = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Belum-Ada-QRIS';
+    let selectedOutlet = null;
     let realtimeChannel = null;
 
     let cart = [];
@@ -1251,8 +1264,22 @@ ${addonLines}
           buyerDataStr += `- ${f.label}: ${val || '-'}\n`;
       }
 
+      const outletLines = selectedOutlet
+        ? `Nama gerai: ${selectedOutlet.name}\nAlamat gerai: ${selectedOutlet.address}\n${selectedOutlet.note ? 'Catatan gerai: ' + selectedOutlet.note + '\\n' : ''}`
+        : 'Gerai / outlet: Belum dipilih\\n';
+      if ((Array.isArray(uiSettings.outlets) ? uiSettings.outlets : []).length && !selectedOutlet) {
+        alert('Pilih gerai / outlet terlebih dahulu sebelum konfirmasi pesanan.');
+        const list = document.getElementById('outletsList');
+        const toggle = document.getElementById('outletsToggle');
+        if (list) list.hidden = false;
+        if (toggle) { toggle.setAttribute('aria-expanded', 'true'); toggle.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
+
       let msg = `Halo Admin *${uiSettings.headerName}*, saya ingin konfirmasi pesanan setelah pembayaran QRIS.\n\n` +
                 `━━━━━━━━━━━━━━━━━━\n` +
+                `*🏪 GERAI / OUTLET PENGAMBILAN*\n` +
+                outletLines + `\n━━━━━━━━━━━━━━━━━━\n` +
                 `*🛍️ RINCIAN PESANAN*\n` +
                 `━━━━━━━━━━━━━━━━━━\n\n` +
                 `${productListText}\n\n` +
@@ -1735,11 +1762,40 @@ ${addonLines}
     function escapeOutletText(value) {
       return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     }
+    function toggleOutletChoices() {
+      const list = document.getElementById('outletsList');
+      const toggle = document.getElementById('outletsToggle');
+      if (!list || !toggle) return;
+      const willOpen = list.hidden;
+      list.hidden = !willOpen;
+      toggle.setAttribute('aria-expanded', String(willOpen));
+    }
+
+    function selectOutlet(index) {
+      const outlets = Array.isArray(uiSettings.outlets) ? uiSettings.outlets : [];
+      const outlet = outlets[index];
+      if (!outlet) return;
+      selectedOutlet = { name: outlet.name || '', address: outlet.address || '', note: outlet.note || '' };
+      renderOutlets();
+      const list = document.getElementById('outletsList');
+      const toggle = document.getElementById('outletsToggle');
+      const summary = document.getElementById('selectedOutletSummary');
+      if (summary) summary.textContent = selectedOutlet.name + ' — ' + selectedOutlet.address;
+      if (list) list.hidden = true;
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    }
+
     function renderOutlets() {
       const list = document.getElementById('outletsList');
       if (!list) return;
       const outlets = Array.isArray(uiSettings.outlets) ? uiSettings.outlets : [];
-      list.innerHTML = outlets.length ? outlets.map(outlet => `<article class="outlet-card"><h3><i class="fa-solid fa-store" style="color:#d97706;margin-right:6px;"></i>${escapeOutletText(outlet.name)}</h3><div class="outlet-address"><i class="fa-solid fa-location-dot"></i><span>${escapeOutletText(outlet.address)}</span></div>${outlet.note ? `<div class="outlet-note"><i class="fa-solid fa-circle-info"></i> ${escapeOutletText(outlet.note)}</div>` : ''}<div style="margin-top:12px;font-size:11px;color:#78716c;font-weight:700;"><i class="fa-solid fa-bag-shopping"></i> Pengambilan pesanan / Take Away</div></article>`).join('') : '<div class="outlet-empty"><i class="fa-solid fa-store"></i><p style="margin:8px 0 0;font-weight:700;">Informasi gerai segera hadir.</p><p style="margin:4px 0 0;">Gerai akan ditampilkan setelah ditambahkan melalui panel admin.</p></div>';
+      if (selectedOutlet && !outlets.some(o => o.name === selectedOutlet.name && o.address === selectedOutlet.address)) selectedOutlet = null;
+      const summary = document.getElementById('selectedOutletSummary');
+      if (summary) summary.textContent = selectedOutlet ? selectedOutlet.name + ' — ' + selectedOutlet.address : 'Ketuk di sini untuk melihat pilihan gerai';
+      list.innerHTML = outlets.length ? outlets.map((outlet, index) => {
+        const isSelected = selectedOutlet && selectedOutlet.name === outlet.name && selectedOutlet.address === outlet.address;
+        return `<button type="button" class="outlet-card${isSelected ? ' selected' : ''}" onclick="selectOutlet(${index})" aria-pressed="${Boolean(isSelected)}"><h3><i class="fa-solid fa-store" style="color:#d97706;margin-right:6px;"></i>${escapeOutletText(outlet.name)}</h3><div class="outlet-address"><i class="fa-solid fa-location-dot"></i><span>${escapeOutletText(outlet.address)}</span></div>${outlet.note ? `<div class="outlet-note"><i class="fa-solid fa-circle-info"></i> ${escapeOutletText(outlet.note)}</div>` : ''}<div style="margin-top:12px;font-size:11px;color:#78716c;font-weight:700;"><i class="fa-solid fa-bag-shopping"></i> Pengambilan pesanan / Take Away</div>${isSelected ? '<span class="outlet-selected-label"><i class="fa-solid fa-check"></i> Gerai dipilih</span>' : ''}</button>`;
+      }).join('') : '<div class="outlet-empty"><i class="fa-solid fa-store"></i><p style="margin:8px 0 0;font-weight:700;">Informasi gerai segera hadir.</p><p style="margin:4px 0 0;">Gerai akan ditampilkan setelah ditambahkan melalui panel admin.</p></div>';
     }
     function renderAdminOutlets() {
       const list = document.getElementById('adminOutletsList'); if (!list) return;

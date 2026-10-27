@@ -1753,9 +1753,12 @@ ${addonLines}
 
       const optionGroups = readAdminOptionGroups();
       let newAddons = [];
-      document.querySelectorAll('.addon-row-admin').forEach(row => {
-          let n = row.querySelector('.adm-addon-name').value.trim();
-          let p = Number(row.querySelector('.adm-addon-price').value) || 0;
+      document.querySelectorAll('#adminAddonsContainer .addon-row-admin').forEach(row => {
+          const nameInput = row.querySelector('.adm-addon-name');
+          const priceInput = row.querySelector('.adm-addon-price');
+          if (!nameInput || !priceInput) return;
+          let n = nameInput.value.trim();
+          let p = Number(priceInput.value) || 0;
           if(n) newAddons.push({name: n, price: p});
       });
 

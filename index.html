@@ -1191,12 +1191,17 @@
 
     function renderCheckoutForm() {
         const formContainer = document.getElementById('dynamicCheckoutForm');
+        const savedValues = {};
+        formContainer.querySelectorAll('input[id^="co_"]').forEach(input => { savedValues[input.id] = input.value; });
         formContainer.innerHTML = checkoutFields.map(f => `
             <div class="form-group">
                 <label class="form-label">${f.label} ${f.req ? '<span style="color:#dc2626">*</span>' : ''}</label>
                 <input type="${f.type}" id="co_${f.id}" placeholder="Ketik di sini..." class="form-input" ${f.req ? 'required' : ''} />
             </div>
         `).join('');
+        formContainer.querySelectorAll('input[id^="co_"]').forEach(input => {
+          if (Object.prototype.hasOwnProperty.call(savedValues, input.id)) input.value = savedValues[input.id];
+        });
     }
 
     function renderCheckoutSummary() {
@@ -1233,13 +1238,13 @@
       renderCheckoutForm();
       renderCheckoutSummary();
       calculateTotals();
+      // Pertahankan status QRIS dan gambar saat checkout dibuka kembali.
       const qrisBox = document.getElementById('qrisBox');
       const qrisOption = document.getElementById('checkoutQrisOption');
-      const qrisImage = document.getElementById('qrisDisplayFinal');
-      qrisBox.hidden = true;
-      qrisImage.removeAttribute('src');
-      qrisOption.classList.remove('selected');
-      qrisOption.setAttribute('aria-expanded', 'false');
+      if (qrisBox && !qrisBox.hidden) {
+        qrisOption.classList.add('selected');
+        qrisOption.setAttribute('aria-expanded', 'true');
+      }
       closeModal('modalCart');
       document.getElementById('modalCheckout').classList.add('open');
     }
@@ -1248,13 +1253,12 @@
       const qrisBox = document.getElementById('qrisBox');
       const qrisOption = document.getElementById('checkoutQrisOption');
       const qrisImage = document.getElementById('qrisDisplayFinal');
-      // Pilihan QRIS hanya membuka sekali; setelah terbuka, ketukan berikutnya tidak menyembunyikannya.
-      if (!qrisBox.hidden) return;
+      // Tombol tetap aktif: ketukan berulang memastikan panel/gambar QRIS tetap tersedia.
       qrisBox.hidden = false;
       qrisOption.classList.add('selected');
       qrisOption.setAttribute('aria-expanded', 'true');
-      qrisOption.disabled = true;
-      qrisOption.setAttribute('aria-disabled', 'true');
+      qrisOption.disabled = false;
+      qrisOption.removeAttribute('aria-disabled');
       calculateTotals();
       if (qrisImage.dataset.croppedFor === storeQris && qrisImage.src) return;
       qrisImage.src = storeQris;

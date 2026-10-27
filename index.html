@@ -954,7 +954,7 @@
         document.getElementById('varPrice').innerText = formatRp(tempVariantProduct.price);
         const descriptionEl = document.getElementById('varDescription');
         if (descriptionEl) {
-          const description = String(tempVariantProduct.description || '').trim();
+          const description = String(tempVariantProduct.desc || tempVariantProduct.description || '').trim();
           descriptionEl.textContent = description || 'Belum ada keterangan untuk produk ini.';
         }
 

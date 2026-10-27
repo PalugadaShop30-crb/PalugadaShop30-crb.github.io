@@ -958,7 +958,7 @@
           const chosen = selected.find(a => a.group === group.name);
           const option = chosen ? group.options.find(o => o.name === chosen.name) : null;
           html += '<section style="margin:0 0 20px"><h4 style="font-size:18px;font-weight:800;margin:0 0 10px">'+group.name+' <small style="font-size:12px;color:#a8a29e">Select 1</small></h4><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">';
-          group.options.forEach(o => { const on=option && option.name===o.name; html += '<label style="min-height:82px;display:flex;align-items:center;justify-content:center;gap:7px;flex-direction:column;text-align:center;padding:12px 8px;border:2px solid '+(on?'#c49a5a':'#f5f5f4')+';border-radius:12px;background:'+(on?'#fffaf2':'#fafafa')+';cursor:pointer"><input type="radio" name="variantGroup_'+gi+'" class="variant-group-choice" data-group="'+group.name+'" data-name="'+o.name+'" data-price="'+Number(o.price||0)+'" '+(on?'checked':'')+' onchange="styleVariantChoices()" style="accent-color:#b88a4b"><strong>'+o.name+'</strong><small style="color:#059669;font-weight:700">'+(Number(o.price||0)?'+ '+formatRp(o.price):'Termasuk harga')+'</small></label>'; });
+          group.options.forEach(o => { const on=option && option.name===o.name; html += '<label style="min-height:82px;display:flex;align-items:center;justify-content:center;gap:7px;flex-direction:column;text-align:center;padding:12px 8px;border:2px solid '+(on?'#c49a5a':'#f5f5f4')+';border-radius:12px;background:'+(on?'#fffaf2':'#fafafa')+';cursor:pointer"><input type="radio" name="variantGroup_'+gi+'" class="variant-group-choice" data-group="'+group.name+'" data-name="'+o.name+'" data-price="'+Number(o.price||0)+'" data-was-checked="'+(on?'true':'false')+'" '+(on?'checked':'')+' onclick="toggleVariantChoice(this)" style="accent-color:#b88a4b"><strong>'+o.name+'</strong><small style="color:#059669;font-weight:700">'+(Number(o.price||0)?'+ '+formatRp(o.price):'Termasuk harga')+'</small></label>'; });
           html += '</div></section>';
         });
         if (legacyAddons.length) { html += '<h4 style="font-size:16px;font-weight:800;margin-bottom:8px">Tambahan / Topping</h4>'; legacyAddons.forEach((a,idx)=>{const on=selected.some(x=>x.name===a.name&&!x.group);html+='<label class="topping-item"><div><strong>'+a.name+'</strong><div style="font-size:11px;color:#059669;font-weight:bold">'+(Number(a.price)>0?'+ '+formatRp(a.price):'Gratis')+'</div></div><input type="checkbox" class="topping-checkbox" id="chkAddon_'+idx+'" data-name="'+a.name+'" data-price="'+a.price+'" '+(on?'checked':'')+'></label>';}); }
@@ -969,6 +969,15 @@
     }
 
     function styleVariantChoices() { document.querySelectorAll('.variant-group-choice').forEach(input => { const label=input.closest('label'); if(label){label.style.borderColor=input.checked?'#c49a5a':'#f5f5f4';label.style.background=input.checked?'#fffaf2':'#fafafa';} }); }
+
+    function toggleVariantChoice(input) {
+      const wasChecked = input.dataset.wasChecked === "true";
+      const groupInputs = document.querySelectorAll('input[name="' + input.name + '"]');
+      groupInputs.forEach(option => { option.dataset.wasChecked = "false"; });
+      input.checked = !wasChecked;
+      input.dataset.wasChecked = String(input.checked);
+      styleVariantChoices();
+    }
 
     function updateQty(val) {
         tempVariantQty += val;

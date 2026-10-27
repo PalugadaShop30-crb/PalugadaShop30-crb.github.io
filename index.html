@@ -98,7 +98,14 @@
     .cart-edit-btn { margin-top: 8px; padding: 7px 9px; border: 1px solid #fed7aa; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 700; cursor: pointer; }
     .cart-item-info { min-width: 0; }
     .cart-item-title { overflow-wrap: anywhere; }
-    .outlets-section { padding:26px 0;background:#fffaf3;border-top:1px solid #f3e8d7;border-bottom:1px solid #f3e8d7; }
+    .outlets-section { padding:8px 0;background:#fffaf3;border-top:1px solid #f3e8d7;border-bottom:1px solid #f3e8d7; }
+    .outlets-section .container { max-width:900px; }
+    .outlets-section:has(#outletsList[hidden]) { padding:6px 0; }
+    .outlets-section:has(#outletsList[hidden]) .outlets-heading { margin:0; }
+    .outlets-section:has(#outletsList[hidden]) .outlets-heading-icon { flex-basis:36px;width:36px;height:36px;border-radius:11px;font-size:16px; }
+    .outlets-section:has(#outletsList[hidden]) .outlets-heading-title { font-size:15px; }
+    .outlets-section:has(#outletsList[hidden]) .outlets-heading-sub { font-size:11px; }
+    .outlets-section:has(#outletsList[hidden]) .outlets-eyebrow { display:none; }
     .outlets-heading { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px; }
     .outlets-heading h2 { margin:0 0 6px;font-size:22px;font-weight:800;color:#292524; }
     .outlets-heading p { margin:0;color:#78716c;font-size:13px; }
@@ -329,7 +336,7 @@
   <section class="outlets-section" id="outletsSection">
     <div class="container">
       <button type="button" class="outlets-heading outlets-toggle" id="outletsToggle" onclick="toggleOutletChoices()" aria-expanded="false" aria-controls="outletsList">
-        <span class="outlets-heading-copy"><span class="outlets-eyebrow">PICK UP / TAKE AWAY</span><span class="outlets-heading-title">Pilih Gerai / Outlet</span><span class="outlets-heading-sub" id="selectedOutletSummary">Ketuk di sini untuk melihat pilihan gerai</span></span>
+        <span class="outlets-heading-copy"><span class="outlets-heading-title"><i class="fa-solid fa-location-dot" style="color:#d97706;margin-right:7px;"></i><span id="selectedOutletTitle">Pilih Gerai / Outlet</span></span><span class="outlets-heading-sub" id="selectedOutletSummary">Ketuk untuk memilih lokasi pengambilan</span></span>
         <span class="outlets-heading-icon"><i class="fa-solid fa-store"></i><i class="fa-solid fa-chevron-down outlets-chevron" id="outletsChevron"></i></span>
       </button>
       <div id="outletsList" class="outlets-grid" hidden></div>
@@ -1791,7 +1798,9 @@ ${addonLines}
       const outlets = Array.isArray(uiSettings.outlets) ? uiSettings.outlets : [];
       if (selectedOutlet && !outlets.some(o => o.name === selectedOutlet.name && o.address === selectedOutlet.address)) selectedOutlet = null;
       const summary = document.getElementById('selectedOutletSummary');
-      if (summary) summary.textContent = selectedOutlet ? selectedOutlet.name + ' — ' + selectedOutlet.address : 'Ketuk di sini untuk melihat pilihan gerai';
+      const title = document.getElementById('selectedOutletTitle');
+      if (title) title.textContent = selectedOutlet ? selectedOutlet.name : 'Pilih Gerai / Outlet';
+      if (summary) summary.textContent = selectedOutlet ? selectedOutlet.address : 'Ketuk untuk memilih lokasi pengambilan';
       list.innerHTML = outlets.length ? outlets.map((outlet, index) => {
         const isSelected = selectedOutlet && selectedOutlet.name === outlet.name && selectedOutlet.address === outlet.address;
         return `<button type="button" class="outlet-card${isSelected ? ' selected' : ''}" onclick="selectOutlet(${index})" aria-pressed="${Boolean(isSelected)}"><h3><i class="fa-solid fa-store" style="color:#d97706;margin-right:6px;"></i>${escapeOutletText(outlet.name)}</h3><div class="outlet-address"><i class="fa-solid fa-location-dot"></i><span>${escapeOutletText(outlet.address)}</span></div>${outlet.note ? `<div class="outlet-note"><i class="fa-solid fa-circle-info"></i> ${escapeOutletText(outlet.note)}</div>` : ''}<div style="margin-top:12px;font-size:11px;color:#78716c;font-weight:700;"><i class="fa-solid fa-bag-shopping"></i> Pengambilan pesanan / Take Away</div>${isSelected ? '<span class="outlet-selected-label"><i class="fa-solid fa-check"></i> Gerai dipilih</span>' : ''}</button>`;

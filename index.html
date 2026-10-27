@@ -563,7 +563,12 @@
             <div class="form-group"><input type="text" id="adminProdBadge" placeholder="Badge Label (cth: Promo Spesial)" class="form-input" /></div>
             <div class="form-group"><textarea id="adminProdDesc" placeholder="Deskripsi Singkat..." class="form-input" rows="2"></textarea></div>
             
-            <div style="background:#f8fafc;padding:12px;border-radius:10px;border:1px dashed #64748b;margin-top:16px;"><label class="form-label">Opsi Menu per Bagian (Size, Milk Option, Sugar Level, dll.)</label><p style="font-size:11px;color:#64748b;margin:4px 0 8px;">Isi JSON grup opsi, misalnya Size berisi Regular dan Large.</p><textarea id="adminOptionGroupsJson" class="form-input" rows="5" placeholder='[{"name":"Size","options":[{"name":"Regular","price":0},{"name":"Large","price":3000}]}]'></textarea></div>
+            <div style="background:#f8fafc;padding:12px;border-radius:10px;border:1px dashed #64748b;margin-top:16px;">
+                <label class="form-label"><i class="fa-solid fa-sliders"></i> Pilihan Varian per Bagian</label>
+                <p style="font-size:11px;color:#64748b;margin:4px 0 10px;">Buat bagian seperti Size, Milk Option, Sugar Level, atau Ice Level. Setiap bagian punya pilihan dan harga tambahan sendiri.</p>
+                <div id="adminOptionGroupsContainer"></div>
+                <button type="button" onclick="addOptionGroupRow()" style="background:#dbeafe;color:#1d4ed8;border:none;padding:8px 12px;border-radius:7px;font-size:11px;font-weight:bold;cursor:pointer;margin-top:8px;">+ Tambah Bagian Varian</button>
+            </div>
             <!-- SISTEM TAMBAH TOPPING/VARIAN -->
             <div style="background: #fdfaf6; padding: 12px; border-radius: 10px; border: 1px dashed #d97706; margin-top: 16px;">
                 <label class="form-label" style="color:#92400e;"><i class="fa-solid fa-list"></i> Varian / Topping Tambahan</label>
@@ -1696,6 +1701,44 @@ ${addonLines}
         document.getElementById('adminAddonsContainer').appendChild(div);
     }
 
+    function addOptionGroupRow(group = null) {
+      const container = document.getElementById('adminOptionGroupsContainer');
+      const card = document.createElement('div');
+      card.className = 'option-group-admin';
+      card.style.cssText = 'background:#fff;padding:10px;border:1px solid #cbd5e1;border-radius:10px;margin-bottom:10px;';
+      card.innerHTML = '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;"><input type="text" class="form-input adm-group-name" placeholder="Nama bagian (cth: Size)" style="flex:1;padding:8px;"><button type="button" class="remove-option-group" style="background:#dc2626;color:#fff;border:0;padding:8px 10px;border-radius:7px;">Hapus Bagian</button></div><div class="adm-group-options"></div><button type="button" class="add-group-option" style="background:#e0f2fe;color:#0369a1;border:0;padding:7px 10px;border-radius:7px;font-size:11px;font-weight:bold;">+ Tambah Pilihan</button>';
+      card.querySelector('.adm-group-name').value = group && group.name ? group.name : '';
+      card.querySelector('.remove-option-group').onclick = () => card.remove();
+      card.querySelector('.add-group-option').onclick = () => addGroupOptionRow(card);
+      container.appendChild(card);
+      (group && Array.isArray(group.options) && group.options.length ? group.options : [{name:'',price:0}]).forEach(o => addGroupOptionRow(card, o.name, o.price));
+    }
+
+    function addGroupOptionRow(groupCard, name = '', price = 0) {
+      const row = document.createElement('div');
+      row.className = 'addon-row-admin adm-group-option';
+      row.innerHTML = '<input type="text" class="form-input adm-option-name" placeholder="Nama pilihan (cth: Regular)" style="flex:2;min-width:0;padding:8px;"><input type="number" min="0" class="form-input adm-option-price" placeholder="Harga (+Rp)" style="flex:1;min-width:0;padding:8px;"><button type="button" style="background:#dc2626;color:#fff;border:0;padding:8px;border-radius:8px;">×</button>';
+      row.querySelector('.adm-option-name').value = name || '';
+      row.querySelector('.adm-option-price').value = Number(price) || 0;
+      row.querySelector('button').onclick = () => row.remove();
+      groupCard.querySelector('.adm-group-options').appendChild(row);
+    }
+
+    function readAdminOptionGroups() {
+      const groups = [];
+      document.querySelectorAll('#adminOptionGroupsContainer .option-group-admin').forEach(card => {
+        const name = card.querySelector('.adm-group-name').value.trim();
+        const options = [];
+        card.querySelectorAll('.adm-group-option').forEach(row => {
+          const optionName = row.querySelector('.adm-option-name').value.trim();
+          const price = Number(row.querySelector('.adm-option-price').value) || 0;
+          if (optionName) options.push({name: optionName, price});
+        });
+        if (name && options.length) groups.push({name, options});
+      });
+      return groups;
+    }
+
     async function saveAdminProduct() {
       const id = document.getElementById('adminProdId').value;
       const title = document.getElementById('adminProdName').value;
@@ -1708,8 +1751,7 @@ ${addonLines}
       
       if (!title || !price) return alert('Nama dan Harga wajib diisi!');
 
-      let optionGroups = [];
-      try { const raw=document.getElementById('adminOptionGroupsJson').value.trim(); if(raw) optionGroups=JSON.parse(raw); if(!Array.isArray(optionGroups)||optionGroups.some(g=>!g.name||!Array.isArray(g.options)||!g.options.length||g.options.some(o=>!o.name))) throw new Error('Format grup/opsi tidak valid'); } catch(e) { return alert('Opsi menu tidak valid: '+e.message); }
+      const optionGroups = readAdminOptionGroups();
       let newAddons = [];
       document.querySelectorAll('.addon-row-admin').forEach(row => {
           let n = row.querySelector('.adm-addon-name').value.trim();
@@ -1754,11 +1796,10 @@ ${addonLines}
       document.getElementById('imgPreview').src = p.img;
       document.getElementById('imgPreview').style.display = 'block';
 
-      document.getElementById('adminOptionGroupsJson').value = p.optionGroups && p.optionGroups.length ? JSON.stringify(p.optionGroups, null, 2) : '';
+      document.getElementById('adminOptionGroupsContainer').innerHTML = '';
+      if(p.optionGroups) p.optionGroups.forEach(group => addOptionGroupRow(group));
       document.getElementById('adminAddonsContainer').innerHTML = '';
-      if(p.addons) {
-          p.addons.forEach(a => addAddonRow(a.name, a.price));
-      }
+      if(p.addons) p.addons.forEach(a => addAddonRow(a.name, a.price));
       document.getElementById('tabProduk').scrollIntoView();
     }
 
@@ -1774,6 +1815,7 @@ ${addonLines}
       document.getElementById('imgPreview').src = '';
       document.getElementById('imgPreview').style.display = 'none';
       document.getElementById('adminAddonsContainer').innerHTML = '';
+      document.getElementById('adminOptionGroupsContainer').innerHTML = '';
     }
 
     async function deleteAdminProduct(id) {

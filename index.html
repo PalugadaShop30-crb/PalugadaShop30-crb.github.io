@@ -878,17 +878,19 @@
       }
 
       if (activeCat === 'all') {
-          // 1. Tampilkan Promo Section (Bila ada harga coret)
-          const promoProds = products.filter(p => p.orig && p.orig > p.price);
+          // Produk dengan badge yang bertuliskan "promo" hanya tampil di bagian Promo Spesial.
+          // Badge menjadi penentu penempatan; harga coret saja tidak membuat produk masuk ke bagian promo.
+          const isPromoBadge = p => /promo/i.test(String(p.badge || ''));
+          const promoProds = products.filter(isPromoBadge);
           if (promoProds.length > 0) {
               let html = `<h3 class="category-header"><i class="fa-solid fa-fire" style="color:#dc2626;"></i> Promo Spesial</h3>`;
               html += `<div class="grid">` + promoProds.map(p => generateProductCard(p)).join('') + `</div>`;
               container.innerHTML += html;
           }
 
-          // 2. Tampilkan per kategori yang memiliki produk
+          // Produk promo tidak diduplikasi di kategori; kategori hanya menampilkan produk non-promo.
           categories.forEach(c => {
-              const catProds = products.filter(p => p.cat === c.id);
+              const catProds = products.filter(p => p.cat === c.id && !isPromoBadge(p));
               if(catProds.length > 0) {
                   let html = `<h3 class="category-header" style="margin-top: 30px;"><i class="fa-solid fa-tags" style="color:#d97706;"></i> Menu ${c.name}</h3>`;
                   html += `<div class="grid">` + catProds.map(p => generateProductCard(p)).join('') + `</div>`;
@@ -897,7 +899,7 @@
           });
           
           // Produk tanpa kategori yang jelas
-          const uncatProds = products.filter(p => !categories.find(c => c.id === p.cat));
+          const uncatProds = products.filter(p => !isPromoBadge(p) && !categories.find(c => c.id === p.cat));
           if(uncatProds.length > 0) {
                let html = `<h3 class="category-header" style="margin-top: 30px;"><i class="fa-solid fa-box"></i> Lainnya</h3>`;
                html += `<div class="grid">` + uncatProds.map(p => generateProductCard(p)).join('') + `</div>`;

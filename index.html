@@ -1744,20 +1744,62 @@ ${addonLines}
       const o=(uiSettings.outlets||[])[i]; if(!o)return;
       document.getElementById('adminOutletEditIndex').value=String(i);document.getElementById('adminOutletName').value=o.name||'';document.getElementById('adminOutletAddress').value=o.address||'';document.getElementById('adminOutletNote').value=o.note||'';
     }
+    function explainSettingsSaveError(error) {
+      const message = String(error?.message || error || 'Kesalahan tidak diketahui');
+      const code = error?.code ? ' (kode: ' + error.code + ')' : '';
+      if (/row-level security|permission denied|not authorized|42501/i.test(message)) {
+        return 'Supabase menolak penyimpanan karena izin admin/RLS. Pastikan akun login terdaftar di public.admin_users dan migration kebijakan admin sudah dijalankan. Detail: ' + message + code;
+      }
+      if (/network|fetch failed|failed to fetch/i.test(message)) {
+        return 'Koneksi ke Supabase gagal. Periksa internet dan konfigurasi Supabase. Detail: ' + message + code;
+      }
+      return message + code + (error?.details ? '\\nDetail: ' + error.details : '') + (error?.hint ? '\\nPetunjuk: ' + error.hint : '');
+    }
+
     async function saveOutlet() {
       const name=document.getElementById('adminOutletName').value.trim(), address=document.getElementById('adminOutletAddress').value.trim(), note=document.getElementById('adminOutletNote').value.trim();
       if(!name||!address)return alert('Nama gerai dan alamat wajib diisi.');
-      const outlets=Array.isArray(uiSettings.outlets)?[...uiSettings.outlets]:[], i=Number(document.getElementById('adminOutletEditIndex').value);
+      const previousOutlets = Array.isArray(uiSettings.outlets) ? [...uiSettings.outlets] : [];
+      const outlets=[...previousOutlets], i=Number(document.getElementById('adminOutletEditIndex').value);
       if(i>=0&&i<outlets.length)outlets[i]={name,address,note};else outlets.push({name,address,note});
       uiSettings.outlets=outlets;
-      try { await persistStoreSettings(); await loadSharedData(); renderAdminOutlets(); resetOutletForm(); notify('Gerai tersimpan untuk semua pengunjung!'); }
-      catch(e){alert('Gerai gagal disimpan: '+e.message);}
+      try {
+        const { data: userResult, error: userError } = await supabaseClient.auth.getUser();
+        if (userError) throw userError;
+        if (!userResult?.user) throw new Error('Sesi login admin tidak ditemukan. Silakan login ulang.');
+        const { data: adminRecord, error: adminError } = await supabaseClient.from('admin_users').select('user_id').eq('user_id', userResult.user.id).maybeSingle();
+        if (adminError) throw adminError;
+        if (!adminRecord) throw new Error('Akun yang sedang login belum terdaftar sebagai admin di public.admin_users.');
+        await persistStoreSettings();
+        await loadSharedData();
+        renderAdminOutlets();
+        resetOutletForm();
+        notify('Gerai tersimpan dan sudah dimuat ulang dari database bersama.');
+      } catch(e) {
+        uiSettings.outlets = previousOutlets;
+        alert('Gerai gagal disimpan:\\n' + explainSettingsSaveError(e));
+      }
     }
     async function deleteOutlet(i) {
-      const outlets=Array.isArray(uiSettings.outlets)?[...uiSettings.outlets]:[]; if(!outlets[i])return;
-      if(!confirm('Hapus gerai ini?'))return; outlets.splice(i,1);uiSettings.outlets=outlets;
-      try { await persistStoreSettings(); await loadSharedData(); renderAdminOutlets(); notify('Gerai dihapus.'); }
-      catch(e){alert('Gerai gagal dihapus: '+e.message);}
+      const previousOutlets = Array.isArray(uiSettings.outlets) ? [...uiSettings.outlets] : [];
+      const outlets=[...previousOutlets]; if(!outlets[i])return;
+      if(!confirm('Hapus gerai ini?'))return;
+      outlets.splice(i,1);uiSettings.outlets=outlets;
+      try {
+        const { data: userResult, error: userError } = await supabaseClient.auth.getUser();
+        if (userError) throw userError;
+        if (!userResult?.user) throw new Error('Sesi login admin tidak ditemukan. Silakan login ulang.');
+        const { data: adminRecord, error: adminError } = await supabaseClient.from('admin_users').select('user_id').eq('user_id', userResult.user.id).maybeSingle();
+        if (adminError) throw adminError;
+        if (!adminRecord) throw new Error('Akun yang sedang login belum terdaftar sebagai admin di public.admin_users.');
+        await persistStoreSettings();
+        await loadSharedData();
+        renderAdminOutlets();
+        notify('Gerai berhasil dihapus.');
+      } catch(e) {
+        uiSettings.outlets = previousOutlets;
+        alert('Gerai gagal dihapus:\\n' + explainSettingsSaveError(e));
+      }
     }
 
     async function saveAdminSetting() {

@@ -179,6 +179,10 @@
     .checkout-summary h3, .checkout-payment-choice h3 { margin: 0 0 16px; font-size: 16px; font-weight: 600; color: #111827; }
     .checkout-order-row { padding: 0 0 14px; margin-bottom: 14px; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 14px; line-height: 1.65; }
     .checkout-order-name { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 5px; }
+    .checkout-shopping-bag { display:flex; align-items:center; justify-content:space-between; gap:12px; margin: 4px 0 16px; padding:14px 12px; border:1px solid #e5e7eb; border-radius:14px; background:#f8fafc; color:#111827; }
+    .checkout-shopping-bag-label { display:flex; align-items:center; gap:10px; min-width:0; font-size:14px; font-weight:700; cursor:pointer; }
+    .checkout-shopping-bag input { width:18px; height:18px; accent-color:#b45309; flex:0 0 auto; }
+    .checkout-shopping-bag-price { white-space:nowrap; font-size:14px; font-weight:800; }
     .checkout-summary-total { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #e5e7eb; padding-top: 16px; font-size: 16px; color: #111827; }
     .checkout-customer-fields { background: #fff; padding: 18px 20px 4px; border-radius: 20px; margin-bottom: 18px; }
     .checkout-customer-fields .form-group { margin-bottom: 16px; }
@@ -463,6 +467,10 @@
         <section class="checkout-summary">
           <h3>Ringkasan Pesanan</h3>
           <div id="checkoutOrderSummary"></div>
+          <label class="checkout-shopping-bag" for="checkoutShoppingBag">
+            <span class="checkout-shopping-bag-label"><input type="checkbox" id="checkoutShoppingBag" onchange="toggleShoppingBag(this.checked)" /> <span><i class="fa-solid fa-bag-shopping"></i> Kantong Belanja</span></span>
+            <span class="checkout-shopping-bag-price">Rp 1.000</span>
+          </label>
           <div class="checkout-summary-total">Total: <strong id="checkoutReviewTotal">Rp 0</strong></div>
         </section>
 
@@ -768,6 +776,8 @@
 
     let cart = [];
     let discountAmount = 0;
+    let shoppingBagSelected = false;
+    const SHOPPING_BAG_FEE = 1000;
     let activeCat = 'all';
 
     let tempVariantProduct = null;
@@ -1071,9 +1081,14 @@
       calculateTotals();
     }
 
+    function toggleShoppingBag(checked) {
+      shoppingBagSelected = Boolean(checked);
+      calculateTotals();
+    }
+
     function calculateTotals() {
       let subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
-      let finalTotal = Math.max(0, subtotal - discountAmount);
+      let finalTotal = Math.max(0, subtotal - discountAmount) + (shoppingBagSelected ? SHOPPING_BAG_FEE : 0);
       if (discountAmount > subtotal) discountAmount = subtotal;
 
       document.getElementById('cartSubtotal').innerText = formatRp(subtotal);
@@ -1113,6 +1128,8 @@
         </div>`;
       }).join('');
       const total = calculateTotals();
+      const bagCheckbox = document.getElementById('checkoutShoppingBag');
+      if (bagCheckbox) bagCheckbox.checked = shoppingBagSelected;
       const totalEl = document.getElementById('checkoutReviewTotal');
       if (totalEl) totalEl.textContent = formatRp(total);
     }
@@ -1321,6 +1338,7 @@ ${addonLines}
                 `*💰 RINGKASAN PEMBAYARAN*\n\n` +
                 `Total harga : ${formatRp(finalTotal + discountAmount)}\n` +
                 `Diskon      : -${formatRp(discountAmount)}\n` +
+                `Kantong belanja: ${shoppingBagSelected ? formatRp(SHOPPING_BAG_FEE) : 'Tidak dipilih (Rp 0)'}\n` +
                 `*TOTAL BAYAR: ${formatRp(finalTotal)}*\n\n` +
                 `━━━━━━━━━━━━━━━━━━\n` +
                 `*👤 DATA PEMBELI*\n\n` +

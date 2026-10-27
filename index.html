@@ -413,6 +413,10 @@
           <p id="varPrice" style="font-size: 16px; font-weight: 800; color: #d97706;">Rp 0</p>
         </div>
       </div>
+      <section style="margin:-6px 0 18px;padding:12px 14px;border:1px solid #e7e5e4;border-radius:12px;background:#fafaf9;">
+        <h4 style="margin:0 0 5px;font-size:12px;font-weight:800;color:#57534e;"><i class="fa-solid fa-circle-info" style="margin-right:5px;color:#d97706;"></i>Keterangan Produk</h4>
+        <p id="varDescription" style="margin:0;font-size:12px;line-height:1.6;color:#57534e;white-space:pre-line;overflow-wrap:anywhere;">Belum ada keterangan produk.</p>
+      </section>
 
       <div id="varAddonsContainer" style="margin-bottom: 20px;">
         <!-- List Topping Checkboxes Render Disini -->
@@ -948,6 +952,11 @@
         document.getElementById('varImg').src = tempVariantProduct.img;
         document.getElementById('varTitle').innerText = tempVariantProduct.title;
         document.getElementById('varPrice').innerText = formatRp(tempVariantProduct.price);
+        const descriptionEl = document.getElementById('varDescription');
+        if (descriptionEl) {
+          const description = String(tempVariantProduct.description || '').trim();
+          descriptionEl.textContent = description || 'Belum ada keterangan untuk produk ini.';
+        }
 
         const addonCont = document.getElementById('varAddonsContainer');
         const groups = tempVariantProduct.optionGroups || [];

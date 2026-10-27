@@ -749,26 +749,30 @@
     }
 
     function applyUI() {
-      document.getElementById('uiPromoLeft').innerHTML = uiSettings.promoLeft;
-      document.getElementById('uiPromoRight').innerHTML = '<i class="fa-solid fa-clock"></i> ' + uiSettings.promoRight;
-      document.getElementById('uiHeaderName').innerText = uiSettings.headerName;
-      document.getElementById('uiHeaderSub').innerText = uiSettings.headerSub;
-      
+      // Guard every optional page element so a missing UI node cannot interrupt
+      // loading shared settings or prevent the outlet list from rendering.
+      const setHTML = (id, value) => { const el = document.getElementById(id); if (el) el.innerHTML = value ?? ''; };
+      const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value ?? ''; };
+      setHTML('uiPromoLeft', uiSettings.promoLeft);
+      setHTML('uiPromoRight', '<i class="fa-solid fa-clock"></i> ' + uiSettings.promoRight);
+      setText('uiHeaderName', uiSettings.headerName);
+      setText('uiHeaderSub', uiSettings.headerSub);
+
       const heroSection = document.getElementById('heroSection');
-      if(uiSettings.heroBgImg) {
+      if (heroSection) {
+        if (uiSettings.heroBgImg) {
           heroSection.style.backgroundImage = `linear-gradient(rgba(43, 16, 2, 0.8), rgba(69, 26, 3, 0.9)), url(${uiSettings.heroBgImg})`;
-      } else {
+        } else {
           heroSection.style.background = 'linear-gradient(180deg, #2b1002, #451a03)';
+        }
       }
 
-      document.getElementById('uiHeroTitle').innerHTML = uiSettings.heroTitle;
-      document.getElementById('uiHeroSub').innerText = uiSettings.heroSub;
-      
-      document.getElementById('uiGuaranteeTitle').innerHTML = '<i class="fa-solid fa-shield-check"></i> ' + uiSettings.guaranteeTitle;
-      document.getElementById('uiGuaranteeList').innerHTML = uiSettings.guaranteeList.split('\n').map(line => `<p>${line}</p>`).join('');
-      
-      document.getElementById('uiWaBtn').innerText = uiSettings.waBtn;
-      document.title = uiSettings.headerName + " - Online Shop";
+      setHTML('uiHeroTitle', uiSettings.heroTitle);
+      setText('uiHeroSub', uiSettings.heroSub);
+      setHTML('uiGuaranteeTitle', '<i class="fa-solid fa-shield-check"></i> ' + uiSettings.guaranteeTitle);
+      setHTML('uiGuaranteeList', String(uiSettings.guaranteeList || '').split('\n').map(line => `<p>${line}</p>`).join(''));
+      setText('uiWaBtn', uiSettings.waBtn);
+      document.title = (uiSettings.headerName || 'Palugada Shop30') + ' - Online Shop';
       renderOutlets();
     }
 
@@ -844,11 +848,16 @@
       renderProducts();
     }
 
-    function notify(text) {
+    function notify(message) {
       const t = document.getElementById('toast');
-      t.innerText = text;
+      if (!t) {
+        console.info('[Palugada Shop30]', message);
+        return;
+      }
+      t.textContent = String(message);
       t.style.display = 'block';
-      setTimeout(() => { t.style.display = 'none'; }, 2000);
+      if (t._hideTimer) clearTimeout(t._hideTimer);
+      t._hideTimer = setTimeout(() => { t.style.display = 'none'; }, 2500);
     }
 
     function closeModal(modalId) {

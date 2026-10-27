@@ -1575,27 +1575,21 @@ ${addonLines}
       const keys = ['palu_cats_v8','palu_products_v8','palu_ui_v8','palu_fields_v8','palu_wa_v8','palu_qris_v8'];
       const present = keys.some(key => localStorage.getItem(key) !== null);
       if (!present || localStorage.getItem('palu_legacy_imported_v1') === 'true') return;
-      if (!confirm('Data toko lama ditemukan di browser ini. Impor ke database bersama sekarang? Data kategori/produk yang ada di database akan diganti dengan data lama dari browser ini.')) return;
+      if (!confirm('Data toko lama ditemukan di browser ini. Impor hanya data yang belum ada ke database bersama? Data kategori/produk yang sudah ada tidak akan dihapus atau ditimpa.')) return;
       try {
         const oldCats = JSON.parse(localStorage.getItem('palu_cats_v8') || 'null');
         const oldProducts = JSON.parse(localStorage.getItem('palu_products_v8') || 'null');
         const oldUI = JSON.parse(localStorage.getItem('palu_ui_v8') || 'null');
         const oldFields = JSON.parse(localStorage.getItem('palu_fields_v8') || 'null');
-        if (Array.isArray(oldCats)) {
-          const { error: deleteError } = await supabaseClient.from('categories').delete().neq('id', '__none__');
-          if (deleteError) throw deleteError;
-          if (oldCats.length) {
-            const { error } = await supabaseClient.from('categories').upsert(oldCats.map(c => ({id:String(c.id),name:c.name})));
-            if (error) throw error;
-          }
+        if (Array.isArray(oldCats) && oldCats.length) {
+          const { error } = await supabaseClient.from('categories')
+            .upsert(oldCats.map(c => ({id:String(c.id),name:c.name})), { onConflict: 'id', ignoreDuplicates: true });
+          if (error) throw error;
         }
-        if (Array.isArray(oldProducts)) {
-          const { error: deleteError } = await supabaseClient.from('products').delete().neq('id', '__none__');
-          if (deleteError) throw deleteError;
-          if (oldProducts.length) {
-            const { error } = await supabaseClient.from('products').upsert(oldProducts.map(productToRow));
-            if (error) throw error;
-          }
+        if (Array.isArray(oldProducts) && oldProducts.length) {
+          const { error } = await supabaseClient.from('products')
+            .upsert(oldProducts.map(productToRow), { onConflict: 'id', ignoreDuplicates: true });
+          if (error) throw error;
         }
         if (oldUI) uiSettings = { ...INITIAL_UI, ...oldUI };
         if (Array.isArray(oldFields)) checkoutFields = oldFields;

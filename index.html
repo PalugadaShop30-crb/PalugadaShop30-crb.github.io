@@ -1067,7 +1067,7 @@
                       <span>Jumlah: <strong>${item.qty}</strong></span>
                       <button type="button" onclick="changeCartQty('${item.cartId}', 1)" aria-label="Tambah jumlah">+</button>
                     </div>
-                    <button type="button" class="cart-edit-btn" onclick="editCartItem('${item.cartId}')"><i class="fa-solid fa-pen"></i> ${inlineAddonEditorId === item.cartId ? 'Selesai Edit' : 'Edit tambahan / topping'}</button>
+                    <button type="button" class="cart-edit-btn" onclick="openVariantModal('${item.productId}', '${item.cartId}')"><i class="fa-solid fa-pen"></i> Edit varian & tambahan</button>
                     ${editorHtml}
                 </div>
                 <button onclick="removeFromCart('${item.cartId}')" class="btn-remove" aria-label="Hapus produk"><i class="fa-solid fa-trash"></i></button>

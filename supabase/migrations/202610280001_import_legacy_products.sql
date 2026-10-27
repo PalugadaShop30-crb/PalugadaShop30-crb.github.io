@@ -1,15 +1,7 @@
 -- Import the 57 legacy products captured in migrated-products.json.
 -- Safe to re-run: IDs are stable (old-01..old-57) and rows are upserted.
 -- Does not delete or modify products with other IDs.
--- Remove only the three untouched demo rows from the original seed migration.
--- The title guard prevents deleting a row that the shop owner has since edited.
-begin;
-
-delete from public.products
-where (id = '1' and title = 'Voucher Kopi Kenangan Rp 25.000')
-   or (id = '2' and title = '1x Kopi Kenangan Mantan (Large)')
-   or (id = '3' and title = 'Voucher Fore Coffee 1 Cup');
-
+-- Preserve all existing products. This migration only inserts/upserts legacy IDs old-01..old-57.
 insert into public.categories (id, name) values
   ('kopken', 'Kopi Kenangan'),
   ('digital', 'Voucher Lainnya')

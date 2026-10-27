@@ -563,6 +563,7 @@
             <div class="form-group"><input type="text" id="adminProdBadge" placeholder="Badge Label (cth: Promo Spesial)" class="form-input" /></div>
             <div class="form-group"><textarea id="adminProdDesc" placeholder="Deskripsi Singkat..." class="form-input" rows="2"></textarea></div>
             
+            <div style="background:#f8fafc;padding:12px;border-radius:10px;border:1px dashed #64748b;margin-top:16px;"><label class="form-label">Opsi Menu per Bagian (Size, Milk Option, Sugar Level, dll.)</label><p style="font-size:11px;color:#64748b;margin:4px 0 8px;">Isi JSON grup opsi, misalnya Size berisi Regular dan Large.</p><textarea id="adminOptionGroupsJson" class="form-input" rows="5" placeholder='[{"name":"Size","options":[{"name":"Regular","price":0},{"name":"Large","price":3000}]}]'></textarea></div>
             <!-- SISTEM TAMBAH TOPPING/VARIAN -->
             <div style="background: #fdfaf6; padding: 12px; border-radius: 10px; border: 1px dashed #d97706; margin-top: 16px;">
                 <label class="form-label" style="color:#92400e;"><i class="fa-solid fa-list"></i> Varian / Topping Tambahan</label>
@@ -944,25 +945,25 @@
         document.getElementById('varPrice').innerText = formatRp(tempVariantProduct.price);
 
         const addonCont = document.getElementById('varAddonsContainer');
-        if (!tempVariantProduct.addons || tempVariantProduct.addons.length === 0) {
-            addonCont.innerHTML = '<p style="font-size:11px; color:#999; font-style:italic;">Tidak ada varian tambahan.</p>';
-        } else {
-            addonCont.innerHTML = tempVariantProduct.addons.map((a, idx) => {
-                const checked = existingItem && existingItem.addons && existingItem.addons.some(selected => selected.name === a.name);
-                return `
-                <label class="topping-item">
-                    <div>
-                        <div style="font-size: 13px; font-weight: bold; color: #292524;">${a.name}</div>
-                        <div style="font-size: 11px; color: #059669; font-weight:bold;">${Number(a.price) > 0 ? '+ ' + formatRp(a.price) : 'Gratis'}</div>
-                    </div>
-                    <input type="checkbox" class="topping-checkbox" id="chkAddon_${idx}" data-name="${a.name}" data-price="${a.price}" ${checked ? 'checked' : ''}>
-                </label>`;
-            }).join('');
-        }
-        const actionButton = document.querySelector('#modalVariant .btn-buy');
+        const groups = tempVariantProduct.optionGroups || [];
+        const legacyAddons = tempVariantProduct.addons || [];
+        const selected = existingItem && existingItem.addons ? existingItem.addons : [];
+        let html = '';
+        groups.forEach((group, gi) => {
+          const chosen = selected.find(a => a.group === group.name);
+          const option = group.options.find(o => o.name === (chosen && chosen.name)) || group.options[0];
+          html += '<section style="margin:0 0 20px"><h4 style="font-size:18px;font-weight:800;margin:0 0 10px">'+group.name+' <small style="font-size:12px;color:#a8a29e">Select 1</small></h4><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">';
+          group.options.forEach(o => { const on=option && option.name===o.name; html += '<label style="min-height:82px;display:flex;align-items:center;justify-content:center;gap:7px;flex-direction:column;text-align:center;padding:12px 8px;border:2px solid '+(on?'#c49a5a':'#f5f5f4')+';border-radius:12px;background:'+(on?'#fffaf2':'#fafafa')+';cursor:pointer"><input type="radio" name="variantGroup_'+gi+'" class="variant-group-choice" data-group="'+group.name+'" data-name="'+o.name+'" data-price="'+Number(o.price||0)+'" '+(on?'checked':'')+' onchange="styleVariantChoices()" style="accent-color:#b88a4b"><strong>'+o.name+'</strong><small style="color:#059669;font-weight:700">'+(Number(o.price||0)?'+ '+formatRp(o.price):'Termasuk harga')+'</small></label>'; });
+          html += '</div></section>';
+        });
+        if (legacyAddons.length) { html += '<h4 style="font-size:16px;font-weight:800;margin-bottom:8px">Tambahan / Topping</h4>'; legacyAddons.forEach((a,idx)=>{const on=selected.some(x=>x.name===a.name&&!x.group);html+='<label class="topping-item"><div><strong>'+a.name+'</strong><div style="font-size:11px;color:#059669;font-weight:bold">'+(Number(a.price)>0?'+ '+formatRp(a.price):'Gratis')+'</div></div><input type="checkbox" class="topping-checkbox" id="chkAddon_'+idx+'" data-name="'+a.name+'" data-price="'+a.price+'" '+(on?'checked':'')+'></label>';}); }
+        addonCont.innerHTML = html || '<p style="font-size:11px;color:#999">Tidak ada varian tambahan.</p>';        const actionButton = document.querySelector('#modalVariant .btn-buy');
         if (actionButton) actionButton.innerHTML = existingItem ? '<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan' : '<i class="fa-solid fa-cart-plus"></i> Masukkan Keranjang';
         document.getElementById('modalVariant').classList.add('open');
+        styleVariantChoices();
     }
+
+    function styleVariantChoices() { document.querySelectorAll('.variant-group-choice').forEach(input => { const label=input.closest('label'); if(label){label.style.borderColor=input.checked?'#c49a5a':'#f5f5f4';label.style.background=input.checked?'#fffaf2':'#fafafa';} }); }
 
     function updateQty(val) {
         tempVariantQty += val;
@@ -973,8 +974,9 @@
     function addToCartExecute() {
         let selectedAddons = [];
         let totalAddonPrice = 0;
+        document.querySelectorAll('.variant-group-choice:checked').forEach(chk => { const price=Number(chk.dataset.price||0); selectedAddons.push({name:chk.dataset.name,price:price,group:chk.dataset.group}); totalAddonPrice+=price; });
 
-        if (tempVariantProduct.addons && tempVariantProduct.addons.length > 0) {
+        if (tempVariantProduct.addons && tempVariantProduct.addons.length > 0)
             tempVariantProduct.addons.forEach((a, idx) => {
                 const chk = document.getElementById(`chkAddon_${idx}`);
                 if (chk && chk.checked) {
@@ -1457,7 +1459,8 @@ ${addonLines}
         id: String(row.id), title: row.title, cat: row.cat || '',
         price: Number(row.price), orig: row.orig === null ? null : Number(row.orig),
         badge: row.badge || '', desc: row.description || '', img: row.img || '',
-        addons: Array.isArray(row.addons) ? row.addons : []
+        addons: (Array.isArray(row.addons) ? row.addons : []).filter(a => !a.__optionGroups),
+        optionGroups: ((Array.isArray(row.addons) ? row.addons : []).find(a => a.__optionGroups) || {}).__optionGroups || []
       };
     }
 
@@ -1466,7 +1469,7 @@ ${addonLines}
         id: String(product.id), title: product.title, cat: product.cat || null,
         price: Number(product.price), orig: product.orig === '' ? null : product.orig,
         badge: product.badge || null, description: product.desc || '',
-        img: product.img || '', addons: product.addons || []
+        img: product.img || '', addons: [...(product.addons || []).filter(a => !a.__optionGroups), ...((product.optionGroups || []).length ? [{ __optionGroups: product.optionGroups }] : [])]
       };
     }
 
@@ -1706,6 +1709,8 @@ ${addonLines}
       
       if (!title || !price) return alert('Nama dan Harga wajib diisi!');
 
+      let optionGroups = [];
+      try { const raw=document.getElementById('adminOptionGroupsJson').value.trim(); if(raw) optionGroups=JSON.parse(raw); if(!Array.isArray(optionGroups)||optionGroups.some(g=>!g.name||!Array.isArray(g.options)||!g.options.length||g.options.some(o=>!o.name))) throw new Error('Format grup/opsi tidak valid'); } catch(e) { return alert('Opsi menu tidak valid: '+e.message); }
       let newAddons = [];
       document.querySelectorAll('.addon-row-admin').forEach(row => {
           let n = row.querySelector('.adm-addon-name').value.trim();
@@ -1717,10 +1722,10 @@ ${addonLines}
       if (id) {
         const existing = products.find(p => p.id === id);
         if (!img && existing) img = existing.img;
-        savedProduct = { id, title, cat, price, orig, badge, desc, img, addons: newAddons };
+        savedProduct = { id, title, cat, price, orig, badge, desc, img, addons: newAddons, optionGroups };
       } else {
         if (!img) img = 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400';
-        savedProduct = { id: Date.now().toString(), title, cat, price, orig, badge, desc, img, addons: newAddons };
+        savedProduct = { id: Date.now().toString(), title, cat, price, orig, badge, desc, img, addons: newAddons, optionGroups };
       }
       try {
         const { error } = await supabaseClient.from('products').upsert(productToRow(savedProduct));
@@ -1750,6 +1755,7 @@ ${addonLines}
       document.getElementById('imgPreview').src = p.img;
       document.getElementById('imgPreview').style.display = 'block';
 
+      document.getElementById('adminOptionGroupsJson').value = p.optionGroups && p.optionGroups.length ? JSON.stringify(p.optionGroups, null, 2) : '';
       document.getElementById('adminAddonsContainer').innerHTML = '';
       if(p.addons) {
           p.addons.forEach(a => addAddonRow(a.name, a.price));

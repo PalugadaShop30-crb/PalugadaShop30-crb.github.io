@@ -1043,19 +1043,30 @@
             const productAddons = product && Array.isArray(product.addons) ? product.addons : [];
             const selectedAddons = item.addons || [];
             const addonHtml = selectedAddons.length ? `<div class="cart-item-addon">Tambahan: ${selectedAddons.map(a => a.name).join(', ')}</div>` : '<div class="cart-item-addon">Tanpa tambahan</div>';
+            const productGroups = product && Array.isArray(product.optionGroups) ? product.optionGroups : [];
             const editorHtml = inlineAddonEditorId === item.cartId
               ? `<div class="cart-addon-editor">
-                  <div class="cart-addon-editor-title">Pilih tambahan / topping</div>
-                  ${productAddons.length ? productAddons.map((a, idx) => {
-                    const checked = selectedAddons.some(selected => selected.name === a.name);
+                  ${productGroups.map((group, gi) => `
+                    <div class="cart-addon-editor-title" style="margin-top:${gi ? '12px' : '0'}">${group.name}</div>
+                    ${(group.options || []).map((option, oi) => {
+                      const checked = selectedAddons.some(selected => selected.group === group.name && selected.name === option.name);
+                      return `<label class="cart-addon-option">
+                        <span>${option.name}<small style="display:block;color:#059669;font-weight:700;">${Number(option.price) > 0 ? '+ ' + formatRp(option.price) : 'Termasuk harga'}</small></span>
+                        <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleCartVariant('${item.cartId}', ${gi}, ${oi}, this.checked)" aria-label="Pilih ${option.name}">
+                      </label>`;
+                    }).join('')}
+                  `).join('')}
+                  ${productAddons.length ? '<div class="cart-addon-editor-title" style="margin-top:12px">Tambahan / topping</div>' + productAddons.map((a, idx) => {
+                    const checked = selectedAddons.some(selected => !selected.group && selected.name === a.name);
                     return `<label class="cart-addon-option">
                       <span>${a.name}<small style="display:block;color:#059669;font-weight:700;">${Number(a.price) > 0 ? '+ ' + formatRp(a.price) : 'Gratis'}</small></span>
                       <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleCartAddon('${item.cartId}', ${idx}, this.checked)" aria-label="Pilih ${a.name}">
                     </label>`;
-                  }).join('') : '<div style="font-size:11px;color:#78716c;">Produk ini tidak memiliki pilihan tambahan.</div>'}
+                  }).join('') : ''}
+                  ${!productGroups.length && !productAddons.length ? '<div style="font-size:11px;color:#78716c;">Produk ini tidak memiliki pilihan varian atau tambahan.</div>' : ''}
+                  <button type="button" class="cart-edit-btn" onclick="editCartItem('${item.cartId}')">Selesai edit</button>
                 </div>`
-              : '';
-            return `
+              : '';            return `
             <div class="cart-item">
                 <img src="${item.img}" class="cart-item-img" alt="${item.title}" />
                 <div class="cart-item-info">
@@ -1067,7 +1078,7 @@
                       <span>Jumlah: <strong>${item.qty}</strong></span>
                       <button type="button" onclick="changeCartQty('${item.cartId}', 1)" aria-label="Tambah jumlah">+</button>
                     </div>
-                    <button type="button" class="cart-edit-btn" onclick="openVariantModal('${item.productId}', '${item.cartId}')"><i class="fa-solid fa-pen"></i> Edit varian & tambahan</button>
+                    <button type="button" class="cart-edit-btn" onclick="editCartItem('${item.cartId}')"><i class="fa-solid fa-pen"></i> ${inlineAddonEditorId === item.cartId ? 'Tutup editor' : 'Edit varian & tambahan'}</button>
                     ${editorHtml}
                 </div>
                 <button onclick="removeFromCart('${item.cartId}')" class="btn-remove" aria-label="Hapus produk"><i class="fa-solid fa-trash"></i></button>
@@ -1094,6 +1105,25 @@
       renderCartItems();
     }
 
+    function recalculateCartItemPrice(item, product) {
+      const selected = item.addons || [];
+      item.unitPrice = Number(product ? product.price : item.unitPrice) + selected.reduce((sum, a) => sum + Number(a.price || 0), 0);
+    }
+
+    function toggleCartVariant(cartId, groupIndex, optionIndex, checked) {
+      const item = cart.find(c => c.cartId === cartId);
+      if (!item) return;
+      const product = products.find(p => String(p.id) === String(item.productId));
+      const group = product && product.optionGroups && product.optionGroups[groupIndex];
+      const option = group && group.options && group.options[optionIndex];
+      if (!group || !option) return;
+      let selected = (item.addons || []).filter(a => !(a.group === group.name && a.name === option.name));
+      if (checked) selected.push({ name: option.name, price: Number(option.price || 0), group: group.name });
+      item.addons = selected;
+      recalculateCartItemPrice(item, product);
+      renderCartItems();
+    }
+
     function toggleCartAddon(cartId, addonIndex, checked) {
       const item = cart.find(c => c.cartId === cartId);
       if (!item) return;
@@ -1101,11 +1131,10 @@
       const availableAddons = product && Array.isArray(product.addons) ? product.addons : [];
       const addon = availableAddons[addonIndex];
       if (!addon) return;
-      const selected = (item.addons || []).filter(a => a.name !== addon.name);
+      let selected = (item.addons || []).filter(a => !(a.name === addon.name && !a.group));
       if (checked) selected.push({ name: addon.name, price: Number(addon.price || 0) });
       item.addons = selected;
-      const basePrice = Number(product ? product.price : item.unitPrice);
-      item.unitPrice = basePrice + selected.reduce((sum, a) => sum + Number(a.price || 0), 0);
+      recalculateCartItemPrice(item, product);
       renderCartItems();
     }
 

@@ -441,8 +441,9 @@
 <div style="font-size: 12px; line-height: 1.8; border-top: 1px solid #e7e5e4; padding-top: 12px;">
         <div style="display: flex; justify-content: space-between; color: #555;"><span>Subtotal:</span><span id="cartSubtotal">Rp 0</span></div>
         <div style="display: flex; justify-content: space-between; color: #059669; font-weight: bold;"><span>Diskon:</span><span id="cartDiscount">- Rp 0</span></div>
+        <div style="display: flex; justify-content: space-between; color: #57534e;"><span>Kantong Belanja:</span><span id="cartShoppingBagFee">Rp 0</span></div>
         <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 18px; color: #78350f; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e7e5e4;">
-          <span>Total Bayar:</span><span id="cartTotal">Rp 0</span>
+          <span>Total Belanja:</span><span id="cartTotal">Rp 0</span>
         </div>
       </div>
 
@@ -1093,6 +1094,8 @@
 
       document.getElementById('cartSubtotal').innerText = formatRp(subtotal);
       document.getElementById('cartDiscount').innerText = `- ${formatRp(discountAmount)}`;
+      const bagFeeEl = document.getElementById('cartShoppingBagFee');
+      if (bagFeeEl) bagFeeEl.innerText = formatRp(shoppingBagSelected ? SHOPPING_BAG_FEE : 0);
       document.getElementById('cartTotal').innerText = formatRp(finalTotal);
       
       document.getElementById('finalTotalPay').innerText = formatRp(finalTotal);

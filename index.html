@@ -567,7 +567,15 @@
                 <div class="form-group"><input type="number" id="adminProdPrice" placeholder="Harga Jual (Rp)" class="form-input" /></div>
                 <div class="form-group"><input type="number" id="adminProdOrigPrice" placeholder="Harga Coret (Rp)" class="form-input" /></div>
             </div>
-            <div class="form-group"><input type="text" id="adminProdBadge" placeholder="Badge Label (cth: Promo Spesial)" class="form-input" /></div>
+            <div class="form-group">
+                <label class="form-label" for="adminProdBadge">Badge Label / Penempatan Khusus (Opsional)</label>
+                <select id="adminProdBadge" class="form-input">
+                    <option value="">Tanpa badge khusus</option>
+                    <option value="Promo Spesial">Promo Spesial</option>
+                    <option value="Produk Baru">Produk Baru</option>
+                </select>
+                <p style="font-size:11px;line-height:1.5;color:#78716c;margin-top:5px;">Promo Spesial tampil di bagian Promo. Produk Baru tampil di bawah Promo. Jika kategori juga dipilih, produk akan tampil di bagian khusus dan kategori tersebut.</p>
+            </div>
             <div class="form-group"><textarea id="adminProdDesc" placeholder="Deskripsi Singkat..." class="form-input" rows="2"></textarea></div>
             
             <div style="background:#f8fafc;padding:12px;border-radius:10px;border:1px dashed #64748b;margin-top:16px;">
@@ -882,9 +890,10 @@
       }
 
       if (activeCat === 'all') {
-          // Produk dengan badge yang bertuliskan "promo" hanya tampil di bagian Promo Spesial.
-          // Badge menjadi penentu penempatan; harga coret saja tidak membuat produk masuk ke bagian promo.
-          const isPromoBadge = p => /promo/i.test(String(p.badge || ''));
+          // Badge menentukan bagian khusus. Produk tetap bisa tampil di kategori jika kategori dipilih.
+          const badgeType = p => String(p.badge || '').trim().toLowerCase();
+          const isPromoBadge = p => badgeType(p).includes('promo');
+          const isNewBadge = p => /produk baru|new produk|new product/i.test(badgeType(p));
           const promoProds = products.filter(isPromoBadge);
           if (promoProds.length > 0) {
               let html = `<h3 class="category-header"><i class="fa-solid fa-fire" style="color:#dc2626;"></i> Promo Spesial</h3>`;
@@ -892,9 +901,16 @@
               container.innerHTML += html;
           }
 
-          // Produk promo tidak diduplikasi di kategori; kategori hanya menampilkan produk non-promo.
+          const newProds = products.filter(isNewBadge);
+          if (newProds.length > 0) {
+              let html = `<h3 class="category-header" style="margin-top:30px;"><i class="fa-solid fa-sparkles" style="color:#2563eb;"></i> Produk Baru</h3>`;
+              html += `<div class="grid">` + newProds.map(p => generateProductCard(p)).join('') + `</div>`;
+              container.innerHTML += html;
+          }
+
+          // Produk berlabel khusus juga boleh tampil di kategori yang dipilih.
           categories.forEach(c => {
-              const catProds = products.filter(p => p.cat === c.id && !isPromoBadge(p));
+              const catProds = products.filter(p => p.cat === c.id);
               if(catProds.length > 0) {
                   let html = `<h3 class="category-header" style="margin-top: 30px;"><i class="fa-solid fa-tags" style="color:#d97706;"></i> Menu ${c.name}</h3>`;
                   html += `<div class="grid">` + catProds.map(p => generateProductCard(p)).join('') + `</div>`;
@@ -903,7 +919,7 @@
           });
           
           // Produk tanpa kategori yang jelas
-          const uncatProds = products.filter(p => !isPromoBadge(p) && !categories.find(c => c.id === p.cat));
+          const uncatProds = products.filter(p => !isPromoBadge(p) && !isNewBadge(p) && !categories.find(c => c.id === p.cat));
           if(uncatProds.length > 0) {
                let html = `<h3 class="category-header" style="margin-top: 30px;"><i class="fa-solid fa-box"></i> Lainnya</h3>`;
                html += `<div class="grid">` + uncatProds.map(p => generateProductCard(p)).join('') + `</div>`;
@@ -1800,6 +1816,19 @@ ${addonLines}
       return groups;
     }
 
+    function setAdminBadgeValue(value) {
+      const select = document.getElementById('adminProdBadge');
+      if (!select) return;
+      const normalized = String(value || '');
+      if (normalized && !Array.from(select.options).some(option => option.value === normalized)) {
+        const customOption = document.createElement('option');
+        customOption.value = normalized;
+        customOption.textContent = normalized;
+        select.appendChild(customOption);
+      }
+      select.value = normalized;
+    }
+
     async function saveAdminProduct() {
       const id = document.getElementById('adminProdId').value;
       const title = document.getElementById('adminProdName').value;
@@ -1852,7 +1881,7 @@ ${addonLines}
       document.getElementById('adminProdCat').value = p.cat;
       document.getElementById('adminProdPrice').value = p.price;
       document.getElementById('adminProdOrigPrice').value = p.orig || '';
-      document.getElementById('adminProdBadge').value = p.badge || '';
+      setAdminBadgeValue(p.badge || '');
       document.getElementById('adminProdDesc').value = p.desc;
       
       document.getElementById('adminProdImgFile').value = ''; 
@@ -1872,7 +1901,7 @@ ${addonLines}
       document.getElementById('adminProdName').value = '';
       document.getElementById('adminProdPrice').value = '';
       document.getElementById('adminProdOrigPrice').value = '';
-      document.getElementById('adminProdBadge').value = '';
+      setAdminBadgeValue('');
       document.getElementById('adminProdDesc').value = '';
       document.getElementById('adminProdImgFile').value = '';
       document.getElementById('adminProdImgBase64').value = '';

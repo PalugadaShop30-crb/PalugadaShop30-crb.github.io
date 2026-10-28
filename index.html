@@ -830,9 +830,11 @@
         if (categories.some(c => String(c.id) === String(selectedCategory))) adminCatSelect.value = selectedCategory;
 
         const adminCatList = document.getElementById('adminCatList');
-        adminCatList.innerHTML = categories.map(c => `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding:10px 12px; background:#f5f5f4; border-radius:8px; font-size:13px; font-weight:bold;">
-                <span>${c.name}</span>
+        adminCatList.innerHTML = '<p style="font-size:12px;color:#78716c;margin:0 0 10px;">Atur urutan kategori dengan tombol panah atas/bawah. Urutan ini juga mengubah kategori di halaman utama.</p>' + categories.map((c, i) => `
+            <div data-category-id="${c.id}" style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; padding:10px 12px; background:#f5f5f4; border-radius:8px; font-size:13px; font-weight:bold;">
+                <span style="flex:1;">${c.name}</span>
+                <button type="button" onclick="moveCategory('${c.id}', -1)" aria-label="Naikkan ${c.name}" ${i===0?'disabled':''} style="border:1px solid #d6d3d1;background:#fff;border-radius:6px;padding:7px 10px;cursor:pointer;opacity:${i===0?'.4':'1'}"><i class="fa-solid fa-arrow-up"></i></button>
+                <button type="button" onclick="moveCategory('${c.id}', 1)" aria-label="Turunkan ${c.name}" ${i===categories.length-1?'disabled':''} style="border:1px solid #d6d3d1;background:#fff;border-radius:6px;padding:7px 10px;cursor:pointer;opacity:${i===categories.length-1?'.4':'1'}"><i class="fa-solid fa-arrow-down"></i></button>
                 <button onclick="deleteCategory('${c.id}')" style="color:#dc2626; border:none; background:none; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
             </div>
         `).join('');
@@ -1580,6 +1582,21 @@ ${addonLines}
       if (settingsResult.data) {
         const settings = settingsResult.data;
         uiSettings = { ...INITIAL_UI, ...(settings.ui_settings || {}) };
+      }
+      // Gunakan urutan kategori yang disimpan pemilik toko, bukan urutan alfabet.
+      if (Array.isArray(uiSettings.categoryOrder)) {
+        const order = uiSettings.categoryOrder.map(String);
+        categories.sort((a, b) => {
+          const ai = order.indexOf(String(a.id));
+          const bi = order.indexOf(String(b.id));
+          if (ai < 0 && bi < 0) return 0;
+          if (ai < 0) return 1;
+          if (bi < 0) return -1;
+          return ai - bi;
+        });
+      }
+      if (settingsResult.data) {
+        const settings = settingsResult.data;
         checkoutFields = Array.isArray(settings.checkout_fields) ? settings.checkout_fields : [...INITIAL_CHECKOUT_FIELDS];
         storeWA = settings.store_wa || '6281234567890';
         storeQris = settings.store_qris || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Belum-Ada-QRIS';
@@ -1761,6 +1778,25 @@ ${addonLines}
           await loadSharedData();
           notify('Kategori ditambahkan ke database!');
         } catch (error) { alert('Kategori gagal disimpan: ' + error.message); }
+    }
+
+    async function moveCategory(id, direction) {
+      const currentIndex = categories.findIndex(c => String(c.id) === String(id));
+      const targetIndex = currentIndex + direction;
+      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= categories.length) return;
+      const reordered = [...categories];
+      const [item] = reordered.splice(currentIndex, 1);
+      reordered.splice(targetIndex, 0, item);
+      categories = reordered;
+      uiSettings.categoryOrder = categories.map(c => String(c.id));
+      renderCategories();
+      try {
+        await persistStoreSettings();
+        notify('Urutan kategori berhasil disimpan!');
+      } catch (error) {
+        alert('Urutan kategori belum tersimpan: ' + error.message);
+        await loadSharedData();
+      }
     }
 
     async function deleteCategory(id) {

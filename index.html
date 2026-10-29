@@ -713,6 +713,16 @@
           <div class="form-group"><label class="form-label">Alamat Lengkap Outlet</label><textarea id="adminOutletAddress" class="form-input" rows="3" placeholder="Nama jalan, nomor, kecamatan, kota"></textarea></div>
           <div class="form-group"><label class="form-label">Catatan Pengambilan (opsional)</label><input id="adminOutletNote" class="form-input" placeholder="Contoh: Ambil di kasir, sebutkan nama pemesan" /></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"><button type="button" onclick="saveOutlet()" class="btn-buy" style="flex:1;">Simpan Gerai</button><button type="button" onclick="resetOutletForm()" style="border:1px solid #d6d3d1;background:#fff;border-radius:10px;padding:10px 14px;font-weight:700;">Kosongkan Form</button></div>
+          <div style="padding:14px;border:1px dashed #d97706;border-radius:12px;background:#fffaf3;margin-bottom:18px;">
+            <div class="admin-section-title"><i class="fa-solid fa-file-import"></i> Impor Banyak Outlet Sekaligus</div>
+            <p style="font-size:12px;line-height:1.6;color:#57534e;margin-bottom:10px;">Tempel satu outlet per baris dengan format <strong>Nama | Alamat | Kota | Provinsi</strong>. Alamat boleh dikosongkan jika sumber publik hanya menyediakan nama dan kota; data yang belum lengkap akan diberi catatan, bukan ditebak.</p>
+            <textarea id="adminOutletBulkInput" class="form-input" rows="6" placeholder="Contoh: Ruko Otista Tangerang | Jl. Oto Iskandardinata No. 82 D... | Tangerang | Banten&#10;Nama outlet lain | | Jakarta | DKI Jakarta"></textarea>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+              <button type="button" onclick="importBulkOutlets()" class="btn-buy" style="flex:1;margin-top:0;"><i class="fa-solid fa-file-import"></i> Impor & Simpan Semua</button>
+              <button type="button" onclick="document.getElementById('adminOutletBulkInput').value=''" style="border:1px solid #d6d3d1;background:#fff;border-radius:10px;padding:10px 14px;font-weight:700;">Bersihkan</button>
+            </div>
+            <p id="adminOutletBulkStatus" role="status" style="font-size:12px;line-height:1.5;margin-top:8px;color:#57534e;"></p>
+          </div>
           <div class="admin-section-title">Daftar Gerai Tersimpan</div><div id="adminOutletsList"></div>
         </div>
       </div>
@@ -2166,6 +2176,59 @@ ${addonLines}
         return 'Koneksi ke Supabase gagal. Periksa internet dan konfigurasi Supabase. Detail: ' + message + code;
       }
       return message + code + (error?.details ? '\\nDetail: ' + error.details : '') + (error?.hint ? '\\nPetunjuk: ' + error.hint : '');
+    }
+
+    async function importBulkOutlets() {
+      const input = document.getElementById('adminOutletBulkInput');
+      const status = document.getElementById('adminOutletBulkStatus');
+      const raw = input ? input.value : '';
+      if (!raw.trim()) { if (status) status.textContent = 'Tempel data outlet terlebih dahulu.'; return; }
+
+      const parsed = raw.split(/\\r?\\n/).map(line => line.trim()).filter(Boolean).map((line, index) => {
+        const parts = line.split('|').map(part => part.trim());
+        if (parts.length < 1 || !parts[0]) return null;
+        const name = parts[0];
+        const address = parts[1] || '';
+        const city = parts[2] || '';
+        const province = parts[3] || '';
+        const note = address ? 'Diimpor massal; periksa kembali sumber alamat.' : 'Alamat lengkap belum tersedia; nama/kota dari data impor.';
+        return { name, address, city, province, note, _line: index + 1 };
+      }).filter(Boolean);
+
+      if (!parsed.length) { if (status) status.textContent = 'Tidak ada baris data yang valid.'; return; }
+      const previousOutlets = Array.isArray(uiSettings.outlets) ? [...uiSettings.outlets] : [];
+      const merged = [...previousOutlets];
+      const keys = new Set(merged.map(o => String(o.name || '').trim().toLocaleLowerCase('id-ID') + '|' + String(o.address || '').trim().toLocaleLowerCase('id-ID')));
+      let added = 0, duplicates = 0;
+      parsed.forEach(outlet => {
+        const key = outlet.name.trim().toLocaleLowerCase('id-ID') + '|' + outlet.address.trim().toLocaleLowerCase('id-ID');
+        if (keys.has(key)) { duplicates++; return; }
+        delete outlet._line;
+        merged.push(outlet); keys.add(key); added++;
+      });
+      if (!added) { if (status) status.textContent = 'Semua baris sudah ada. Tidak ada perubahan yang disimpan.'; return; }
+
+      uiSettings.outlets = merged;
+      if (status) status.textContent = 'Menyimpan ' + added + ' outlet baru...';
+      try {
+        const { data: userResult, error: userError } = await supabaseClient.auth.getUser();
+        if (userError) throw userError;
+        if (!userResult?.user) throw new Error('Sesi login admin tidak ditemukan. Silakan login ulang.');
+        const { data: adminRecord, error: adminError } = await supabaseClient.from('admin_users').select('user_id').eq('user_id', userResult.user.id).maybeSingle();
+        if (adminError) throw adminError;
+        if (!adminRecord) throw new Error('Akun yang sedang login belum terdaftar sebagai admin di public.admin_users.');
+        await persistStoreSettings();
+        await loadSharedData();
+        renderAdminOutlets();
+        renderOutlets();
+        if (input) input.value = '';
+        if (status) status.textContent = 'Berhasil menyimpan ' + added + ' outlet baru. ' + duplicates + ' duplikat dilewati. Total outlet: ' + (uiSettings.outlets || []).length + '.';
+        notify('Impor outlet massal berhasil disimpan ke database bersama.');
+      } catch (error) {
+        uiSettings.outlets = previousOutlets;
+        if (status) status.textContent = 'Gagal menyimpan: ' + explainSettingsSaveError(error);
+        alert('Impor outlet gagal disimpan:\\n' + explainSettingsSaveError(error));
+      }
     }
 
     async function saveOutlet() {

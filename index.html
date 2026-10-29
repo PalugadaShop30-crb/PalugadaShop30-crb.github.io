@@ -20,6 +20,16 @@
       } catch (e) {}
     })();
   </script>
+  <script>
+    // Daftarkan service worker agar navigasi berikutnya selalu meminta HTML terbaru.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+          .then(function (registration) { return registration.update(); })
+          .catch(function (error) { console.warn('Service worker gagal didaftarkan:', error); });
+      });
+    }
+  </script>
   <title>Toko Voucher Digital</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>

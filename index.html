@@ -6,6 +6,20 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    // Paksa setiap kunjungan dari URL utama memakai URL versi terbaru.
+    // Dijalankan di HEAD agar HTML lama tidak sempat ditampilkan terlebih dahulu.
+    (function () {
+      var BUILD = '20261030-0600';
+      try {
+        var current = new URL(window.location.href);
+        if (current.searchParams.get('v') !== BUILD) {
+          current.searchParams.set('v', BUILD);
+          window.location.replace(current.toString());
+        }
+      } catch (e) {}
+    })();
+  </script>
   <title>Toko Voucher Digital</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
@@ -832,21 +846,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Penanda versi agar browser dapat mengenali HTML yang sudah diperbarui.
-    const PALUGADA_BUILD_VERSION = '20261030-0512';
-    try {
-      const previousBuild = sessionStorage.getItem('palugada_build_version');
-      if (previousBuild && previousBuild !== PALUGADA_BUILD_VERSION) {
-        sessionStorage.setItem('palugada_build_version', PALUGADA_BUILD_VERSION);
-        const url = new URL(window.location.href);
-        url.searchParams.set('v', PALUGADA_BUILD_VERSION);
-        window.location.replace(url.toString());
-      } else {
-        sessionStorage.setItem('palugada_build_version', PALUGADA_BUILD_VERSION);
-      }
-    } catch (e) { /* Storage browser nonaktif: halaman tetap berjalan normal. */ }
-
-
     // ==========================================
     // DATA DEFAULT AWAL
     // ==========================================

@@ -1351,7 +1351,7 @@
       const summary = document.getElementById('checkoutOrderSummary');
       if (!summary) return;
       const outletSummary = selectedOutlet
-        ? '<div class="checkout-selected-outlet"><span class="checkout-selected-outlet-icon"><i class="fa-solid fa-store"></i></span><div class="checkout-selected-outlet-copy"><p class="checkout-selected-outlet-label">Outlet pilihan</p><p class="checkout-selected-outlet-name">' + escapeHtml(selectedOutlet.name || 'Outlet') + '</p><p class="checkout-selected-outlet-address">' + escapeHtml(selectedOutlet.address || 'Alamat belum tersedia') + '</p></div></div>'
+        ? '<div class="checkout-selected-outlet"><span class="checkout-selected-outlet-icon"><i class="fa-solid fa-store"></i></span><div class="checkout-selected-outlet-copy"><p class="checkout-selected-outlet-label">Outlet pilihan</p><p class="checkout-selected-outlet-name">' + escapeOutletText(selectedOutlet.name || 'Outlet') + '</p><p class="checkout-selected-outlet-address">' + escapeOutletText(selectedOutlet.address || 'Alamat belum tersedia') + '</p></div></div>'
         : '<div class="checkout-selected-outlet"><span class="checkout-selected-outlet-icon"><i class="fa-solid fa-store"></i></span><div class="checkout-selected-outlet-copy"><p class="checkout-selected-outlet-label">Outlet pilihan</p><p class="checkout-selected-outlet-name">Belum memilih outlet</p><p class="checkout-selected-outlet-address">Pilih outlet sebelum konfirmasi pesanan.</p></div></div>';
       summary.innerHTML = outletSummary + cart.map((item, index) => {
         const product = products.find(p => String(p.id) === String(item.productId));
@@ -2173,6 +2173,9 @@ ${addonLines}
       selectedOutlet = { name: outlet.name || '', address: outlet.address || '', note: outlet.note || '' };
       renderOutlets();
       closeOutletPicker();
+      // Jika pemilih outlet dibuka dari halaman checkout, langsung perbarui nama dan alamat di ringkasan.
+      const checkoutModal = document.getElementById('modalCheckout');
+      if (checkoutModal && checkoutModal.classList.contains('open')) renderCheckoutSummary();
     }
 
     function clearOutletSearch() {

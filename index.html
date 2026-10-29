@@ -132,7 +132,15 @@
     .outlet-picker-header { display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid #eee; }
     .outlet-picker-header h2 { margin:0;font-size:18px;font-weight:800;color:#292524; }
     .outlet-picker-close { display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border:0;border-radius:50%;background:#f5f5f4;color:#78716c;font-size:18px; }
-    .outlet-picker-subtitle { margin:12px 0 16px;color:#78716c;font-size:13px; }
+    .outlet-picker-subtitle { margin:12px 0 12px;color:#78716c;font-size:13px; }
+    .outlet-search-wrap { display:flex;align-items:center;gap:10px;padding:0 12px;margin-bottom:8px;border:1px solid #d6d3d1;border-radius:14px;background:#fff;color:#78716c; }
+    .outlet-search-wrap:focus-within { border-color:#d97706;box-shadow:0 0 0 3px rgba(217,119,6,.12); }
+    .outlet-search-wrap > i { flex:0 0 auto; }
+    .outlet-search-wrap input { width:100%;min-width:0;height:46px;border:0;outline:0;background:transparent;font:inherit;font-size:14px;color:#292524; }
+    .outlet-search-clear { flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:9px;background:#f5f5f4;color:#57534e;cursor:pointer; }
+    .outlet-search-count { min-height:18px;margin:0 2px 8px;color:#78716c;font-size:11px; }
+    .outlet-search-empty { padding:24px 14px;text-align:center;color:#78716c;font-size:13px;background:#fafaf9;border:1px dashed #d6d3d1;border-radius:14px; }
+    @media(max-width:480px) { .outlet-search-wrap input { height:44px;font-size:13px; } }
     .outlet-picker-list { min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:1px 3px 5px 1px;grid-template-columns:1fr; }
     .outlet-picker-list .outlet-card { padding:16px;border-radius:20px; }
     @media(max-width:480px) { .outlet-current-card { gap:10px;padding:11px; } .outlet-current-icon { flex-basis:46px;height:46px; } .outlet-current-copy strong { font-size:14px; } .outlet-change-button { padding:9px;font-size:12px; } .outlet-picker-dialog { padding:16px;border-radius:24px; } }
@@ -387,7 +395,13 @@
         <h2 id="outletPickerTitle"><i class="fa-solid fa-store" style="color:#b45309;margin-right:8px;"></i>Pilih Gerai / Outlet</h2>
         <button type="button" class="outlet-picker-close" onclick="closeOutletPicker()" aria-label="Tutup pilihan gerai"><i class="fa-solid fa-xmark"></i></button>
       </header>
-      <p class="outlet-picker-subtitle">Pilih lokasi pengambilan pesanan Anda.</p>
+      <p class="outlet-picker-subtitle">Cari nama outlet, alamat, atau kota agar tidak perlu scroll panjang.</p>
+      <label class="outlet-search-wrap" for="outletSearchInput">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input id="outletSearchInput" type="search" placeholder="Cari outlet atau kota..." autocomplete="off" oninput="renderOutlets()" />
+        <button type="button" class="outlet-search-clear" onclick="clearOutletSearch()" aria-label="Hapus pencarian"><i class="fa-solid fa-xmark"></i></button>
+      </label>
+      <div id="outletSearchCount" class="outlet-search-count" aria-live="polite"></div>
       <div id="outletsList" class="outlets-grid outlet-picker-list"></div>
     </section>
   </div>
@@ -2068,6 +2082,13 @@ ${addonLines}
       closeOutletPicker();
     }
 
+    function clearOutletSearch() {
+      const input = document.getElementById('outletSearchInput');
+      if (input) input.value = '';
+      renderOutlets();
+      if (input) input.focus();
+    }
+
     function renderOutlets() {
       const list = document.getElementById('outletsList');
       if (!list) return;
@@ -2076,13 +2097,23 @@ ${addonLines}
       const summary = document.getElementById('selectedOutletSummary');
       const title = document.getElementById('selectedOutletTitle');
       const changeButton = document.getElementById('outletChangeButton');
+      const searchInput = document.getElementById('outletSearchInput');
+      const searchCount = document.getElementById('outletSearchCount');
+      const query = searchInput ? searchInput.value.trim().toLocaleLowerCase('id-ID') : '';
       if (title) title.textContent = selectedOutlet ? selectedOutlet.name : 'Pilih Gerai / Outlet';
       if (summary) summary.textContent = selectedOutlet ? selectedOutlet.address : 'Ketuk untuk memilih lokasi pengambilan';
       if (changeButton) changeButton.innerHTML = selectedOutlet ? 'Ganti <i class="fa-solid fa-chevron-right"></i>' : 'Pilih <i class="fa-solid fa-chevron-right"></i>';
-      list.innerHTML = outlets.length ? outlets.map((outlet, index) => {
+      const matched = outlets.map((outlet, index) => ({ outlet, index })).filter(({ outlet }) => {
+        const searchable = [outlet.name, outlet.address, outlet.city, outlet.province, outlet.note].filter(Boolean).join(' ').toLocaleLowerCase('id-ID');
+        return !query || searchable.includes(query);
+      });
+      if (searchCount) searchCount.textContent = query ? `${matched.length} dari ${outlets.length} outlet cocok` : `${outlets.length} outlet tersedia`;
+      list.innerHTML = matched.length ? matched.map(({ outlet, index }) => {
         const isSelected = selectedOutlet && selectedOutlet.name === outlet.name && selectedOutlet.address === outlet.address;
-        return `<button type="button" class="outlet-card${isSelected ? ' selected' : ''}" onclick="selectOutlet(${index})" aria-pressed="${Boolean(isSelected)}"><h3><i class="fa-solid fa-store" style="color:#d97706;margin-right:6px;"></i>${escapeOutletText(outlet.name)}</h3><div class="outlet-address"><i class="fa-solid fa-location-dot"></i><span>${escapeOutletText(outlet.address)}</span></div>${outlet.note ? `<div class="outlet-note"><i class="fa-solid fa-circle-info"></i> ${escapeOutletText(outlet.note)}</div>` : ''}<div style="margin-top:12px;font-size:11px;color:#78716c;font-weight:700;"><i class="fa-solid fa-bag-shopping"></i> Pengambilan pesanan / Take Away</div>${isSelected ? '<span class="outlet-selected-label"><i class="fa-solid fa-check"></i> Gerai dipilih</span>' : ''}</button>`;
-      }).join('') : '<div class="outlet-empty"><i class="fa-solid fa-store"></i><p style="margin:8px 0 0;font-weight:700;">Informasi gerai segera hadir.</p><p style="margin:4px 0 0;">Gerai akan ditampilkan setelah ditambahkan melalui panel admin.</p></div>';
+        const status = String(outlet.status || outlet.operational_status || '').trim().toLocaleLowerCase('id-ID');
+        const statusLabel = /^(buka|open|opened|operasional)$/.test(status) ? '<span class="outlet-status outlet-status-open">Buka</span>' : /^(tutup|closed|close|nonaktif)$/.test(status) ? '<span class="outlet-status outlet-status-closed">Tutup</span>' : '';
+        return `<button type="button" class="outlet-card${isSelected ? ' selected' : ''}" onclick="selectOutlet(${index})" aria-pressed="${Boolean(isSelected)}"><h3><i class="fa-solid fa-store" style="color:#d97706;margin-right:6px;"></i>${escapeOutletText(outlet.name)} ${statusLabel}</h3><div class="outlet-address"><i class="fa-solid fa-location-dot"></i><span>${escapeOutletText(outlet.address)}</span></div>${outlet.note ? `<div class="outlet-note"><i class="fa-solid fa-circle-info"></i> ${escapeOutletText(outlet.note)}</div>` : ''}<div style="margin-top:12px;font-size:11px;color:#78716c;font-weight:700;"><i class="fa-solid fa-bag-shopping"></i> Pengambilan pesanan / Take Away</div>${isSelected ? '<span class="outlet-selected-label"><i class="fa-solid fa-check"></i> Gerai dipilih</span>' : ''}</button>`;
+      }).join('') : outlets.length ? '<div class="outlet-empty outlet-search-empty"><i class="fa-solid fa-magnifying-glass"></i><p style="margin:8px 0 0;font-weight:700;">Outlet tidak ditemukan.</p><p style="margin:4px 0 0;">Coba nama outlet, alamat, atau kota lain.</p></div>' : '<div class="outlet-empty"><i class="fa-solid fa-store"></i><p style="margin:8px 0 0;font-weight:700;">Informasi gerai segera hadir.</p><p style="margin:4px 0 0;">Gerai akan ditampilkan setelah ditambahkan melalui panel admin.</p></div>';
     }
     function renderAdminOutlets() {
       const list = document.getElementById('adminOutletsList'); if (!list) return;

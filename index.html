@@ -2348,21 +2348,23 @@ ${addonLines}
       } catch (error) { alert('Pengaturan gagal disimpan: ' + error.message); }
     }
 
-    // INISIALISASI: muat data dari database, lalu dengarkan perubahan bersama.
-    window.onload = async () => {
-      try {
-        await loadSharedData(false);
-      } catch (error) {
-        console.error('Supabase load failed:', error);
-        alert('Data database belum dapat dimuat. Pastikan migrasi SQL Supabase sudah dijalankan. Detail: ' + (error.message || error));
-      }
+    // INISIALISASI: tampilkan UI langsung agar halaman tidak kosong/terlihat tertinggal
+    // saat koneksi Supabase lambat. Data terbaru akan menggantikan data awal begitu tersedia.
+    window.addEventListener('load', () => {
       renderCategories();
       applyUI();
       const waButton = document.getElementById('btnNavWA');
-        if (waButton) waButton.href = `https://wa.me/${storeWA}`;
+      if (waButton) waButton.href = 'https://wa.me/' + storeWA;
       renderProducts();
-      startRealtimeSync();
-    };
+      renderOutlets();
+
+      // Ambil data bersama di latar belakang tanpa memblokir tampilan awal.
+      loadSharedData(true).catch(error => {
+        console.error('Supabase load failed; tampilan awal tetap aktif:', error);
+      }).finally(() => {
+        startRealtimeSync();
+      });
+    });
   </script>
 </body>
 </html>

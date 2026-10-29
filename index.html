@@ -800,6 +800,33 @@
       outlets: []
     };
 
+    // Batch awal outlet Kopi Kenangan dengan alamat lengkap yang tercantum di halaman resmi.
+    // Daftar ini sengaja hanya berisi alamat terverifikasi; jangan isi alamat berdasarkan tebakan.
+    const VERIFIED_KOPI_KENANGAN_OUTLETS = [
+      { name: 'Ruko Otista Tangerang', address: 'Jl. Oto Iskandardinata No. 82 D, RT 004/RW 011, Gerendeng, Karawaci, Kota Tangerang, Banten 15113', city: 'Tangerang', province: 'Banten', note: 'Data alamat dari halaman resmi Kopi Kenangan' },
+      { name: 'Ruko Siliwangi Pamulang', address: 'Jl. Siliwangi, Pamulang Barat, Kec. Pamulang, Kota Tangerang Selatan, Banten 15417', city: 'Tangerang Selatan', province: 'Banten', note: 'Data alamat dari halaman resmi Kopi Kenangan' },
+      { name: 'Ruko Ciparay Kab. Bandung', address: 'Jl. Raya Laswi No. 288 B, RT 01/RW 19, Serangmekar, Ciparay, Kabupaten Bandung, Jawa Barat 40381', city: 'Kabupaten Bandung', province: 'Jawa Barat', note: 'Data alamat dari halaman resmi Kopi Kenangan' },
+      { name: 'Ruko A Yani Batang', address: 'Jl. Ahmad Yani, Singosari, Kauman, Kec. Batang, Kabupaten Batang, Jawa Tengah 51215', city: 'Batang', province: 'Jawa Tengah', note: 'Data alamat dari halaman resmi Kopi Kenangan' },
+      { name: 'Ruko Pondok Jagung Timur', address: 'Jl. Pondok Jagung Timur, Pondok Jagung Timur, Serpong Utara, Kota Tangerang Selatan, Banten 15326', city: 'Tangerang Selatan', province: 'Banten', note: 'Data alamat dari halaman resmi Kopi Kenangan' },
+      { name: 'Ruko Harmoni City Center', address: 'Jl. Citra Harmoni Blok RC-09, Trosobo, Kec. Taman, Kabupaten Sidoarjo, Jawa Timur 61257', city: 'Sidoarjo', province: 'Jawa Timur', note: 'Data alamat dari halaman resmi Kopi Kenangan' },
+      { name: 'Ruko Puspitek Tangerang', address: 'Jl. Raya Puspitek No. 88 A-C, Buaran, Kec. Serpong, Kota Tangerang Selatan, Banten 15310', city: 'Tangerang Selatan', province: 'Banten', note: 'Data alamat dari halaman resmi Kopi Kenangan' },
+      { name: 'Ruko Kebantenan', address: 'Jl. Kebantenan I No. 85, RT 3/RW 8, Semper Timur, Cilincing, Jakarta Utara, DKI Jakarta 14130', city: 'Jakarta Utara', province: 'DKI Jakarta', note: 'Data alamat dari halaman resmi Kopi Kenangan' },
+      { name: 'Ruko Ahmad Yani Km 3,5 Banjarmasin', address: 'Jl. Ahmad Yani No. 147 C dan 147 D, RT 003/RW 000, Kebun Bunga, Banjarmasin Timur, Kota Banjarmasin, Kalimantan Selatan 70235', city: 'Banjarmasin', province: 'Kalimantan Selatan', note: 'Data alamat dari halaman resmi Kopi Kenangan' }
+    ];
+
+    function mergeVerifiedOutletSeed(existing) {
+      const current = Array.isArray(existing) ? [...existing] : [];
+      const keys = new Set(current.map(o => [String(o.name || '').trim().toLocaleLowerCase('id-ID'), String(o.address || '').trim().toLocaleLowerCase('id-ID')].join('|')));
+      VERIFIED_KOPI_KENANGAN_OUTLETS.forEach(outlet => {
+        const key = [outlet.name.trim().toLocaleLowerCase('id-ID'), outlet.address.trim().toLocaleLowerCase('id-ID')].join('|');
+        if (!keys.has(key)) {
+          current.push({ ...outlet });
+          keys.add(key);
+        }
+      });
+      return current;
+    }
+
     const INITIAL_CHECKOUT_FIELDS = [
         { id: 'f_nama', label: 'Nama Lengkap', type: 'text', req: true },
         { id: 'f_wa', label: 'Nomor WhatsApp Aktif', type: 'number', req: true },
@@ -1597,6 +1624,8 @@ ${addonLines}
         const settings = settingsResult.data;
         uiSettings = { ...INITIAL_UI, ...(settings.ui_settings || {}) };
       }
+      // Tambahkan batch alamat terverifikasi tanpa menghapus outlet milik admin.
+      uiSettings.outlets = mergeVerifiedOutletSeed(uiSettings.outlets);
       // Gunakan urutan kategori yang disimpan pemilik toko, bukan urutan alfabet.
       if (Array.isArray(uiSettings.categoryOrder)) {
         const order = uiSettings.categoryOrder.map(String);

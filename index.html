@@ -194,6 +194,13 @@
     .checkout-close { flex: 0 0 auto; width: 44px; height: 44px; border: 0; border-radius: 14px; background: #eef2f7; color: #111827; font-size: 20px; }
     .checkout-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 20px 20px 28px; }
     .checkout-summary { padding: 20px; background: #fff; border: 1px solid #e0e5eb; border-radius: 22px; margin-bottom: 18px; }
+    .checkout-selected-outlet { display:flex;gap:12px;align-items:flex-start;padding:14px;margin:0 0 18px;border:1px solid #ead7bd;border-radius:14px;background:#fff8ec; }
+    .checkout-selected-outlet-icon { flex:0 0 38px;width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#ffedd5;color:#92400e;font-size:17px; }
+    .checkout-selected-outlet-copy { min-width:0; }
+    .checkout-selected-outlet-label { margin:0 0 4px;color:#9a3412;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase; }
+    .checkout-selected-outlet-name { margin:0 0 4px;color:#78350f;font-size:14px;font-weight:800;overflow-wrap:anywhere; }
+    .checkout-selected-outlet-address { margin:0;color:#78716c;font-size:12px;line-height:1.5;overflow-wrap:anywhere; }
+
     .checkout-summary h3, .checkout-payment-choice h3 { margin: 0 0 16px; font-size: 16px; font-weight: 600; color: #111827; }
     .checkout-order-row { padding: 0 0 14px; margin-bottom: 14px; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 14px; line-height: 1.65; }
     .checkout-order-name { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 5px; }
@@ -1343,7 +1350,10 @@
     function renderCheckoutSummary() {
       const summary = document.getElementById('checkoutOrderSummary');
       if (!summary) return;
-      summary.innerHTML = cart.map((item, index) => {
+      const outletSummary = selectedOutlet
+        ? '<div class="checkout-selected-outlet"><span class="checkout-selected-outlet-icon"><i class="fa-solid fa-store"></i></span><div class="checkout-selected-outlet-copy"><p class="checkout-selected-outlet-label">Outlet pilihan</p><p class="checkout-selected-outlet-name">' + escapeHtml(selectedOutlet.name || 'Outlet') + '</p><p class="checkout-selected-outlet-address">' + escapeHtml(selectedOutlet.address || 'Alamat belum tersedia') + '</p></div></div>'
+        : '<div class="checkout-selected-outlet"><span class="checkout-selected-outlet-icon"><i class="fa-solid fa-store"></i></span><div class="checkout-selected-outlet-copy"><p class="checkout-selected-outlet-label">Outlet pilihan</p><p class="checkout-selected-outlet-name">Belum memilih outlet</p><p class="checkout-selected-outlet-address">Pilih outlet sebelum konfirmasi pesanan.</p></div></div>';
+      summary.innerHTML = outletSummary + cart.map((item, index) => {
         const product = products.find(p => String(p.id) === String(item.productId));
         const basePrice = product ? Number(product.price) : Number(item.unitPrice);
         const addonLines = item.addons && item.addons.length

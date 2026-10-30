@@ -1879,8 +1879,21 @@
       if (orderCode) loadBuyerTracking();
     }
     function closeBuyerOrders() {
+      // Tutup seluruh lapisan checkout/keranjang agar pembeli benar-benar kembali ke halaman produk.
       const panel = document.getElementById('buyerTrackingPanel');
       if (panel) panel.style.display = 'none';
+      ['modalCheckout', 'modalCart', 'modalVariant'].forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.remove('open');
+      });
+      // Pesanan sudah tercatat; kosongkan keranjang agar tidak terlihat seperti harus membayar lagi.
+      cart = [];
+      discountAmount = 0;
+      shoppingBagSelected = false;
+      selectedOutlet = null;
+      inlineAddonEditorId = null;
+      if (typeof updateCartBadge === 'function') updateCartBadge();
+      if (typeof renderCartItems === 'function') renderCartItems();
       const input = document.getElementById('buyerOrderCodeInput');
       const content = document.getElementById('buyerTrackingContent');
       const notice = document.getElementById('buyerNewOrderNotice');

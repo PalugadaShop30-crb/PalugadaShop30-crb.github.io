@@ -1606,89 +1606,34 @@
       const buyerData = {};
       for (const f of checkoutFields) {
         const field = document.getElementById('co_' + f.id);
-        buyerData[f.label] = field ? field.value.trim() : '';
+        const value = field ? field.value.trim() : '';
+        if (f.req && !value) { alert('Mohon isi kolom wajib: ' + f.label); if (field) field.focus(); return; }
+        buyerData[f.label] = value;
+      }
+      if ((Array.isArray(uiSettings.outlets) ? uiSettings.outlets : []).length && !selectedOutlet) {
+        alert('Pilih gerai / outlet terlebih dahulu sebelum konfirmasi pesanan.');
+        toggleOutletChoices(); return;
       }
       const orderItems = cart.map(item => ({
         product_id: item.productId, title: item.title, quantity: Number(item.qty),
-        unit_price: Number(item.unitPrice), addons: item.addons || [],
+        unit_price: Number(item.unitPrice), addons: Array.isArray(item.addons) ? item.addons : [],
         line_total: Number(item.unitPrice) * Number(item.qty)
       }));
       const orderRecord = {
         order_code: orderRef, tracking_token: trackingKey, status: 'Menunggu diproses admin',
-        buyer_data: buyerData, outlet: selectedOutlet || {},
-        items: orderItems, subtotal: Number(finalTotal + discountAmount),
-        discount: Number(discountAmount), shopping_bag: !!shoppingBagSelected,
-        total: Number(finalTotal), payment_method: 'QRIS',
-        payment_status: 'Menunggu verifikasi', source: 'PalugadaShop30'
+        buyer_data: buyerData, outlet: selectedOutlet || {}, items: orderItems,
+        subtotal: Number(finalTotal + discountAmount), discount: Number(discountAmount),
+        shopping_bag: !!shoppingBagSelected, total: Number(finalTotal),
+        payment_method: 'QRIS', payment_status: 'Menunggu verifikasi', source: 'PalugadaShop30'
       };
-      let productListText = cart.map((item, index) => {
-          const product = products.find(p => String(p.id) === String(item.productId));
-          const basePrice = product ? Number(product.price) : Number(item.unitPrice);
-          const addonTotal = (item.addons || []).reduce((sum, addon) => sum + Number(addon.price || 0), 0);
-          const addonLines = item.addons && item.addons.length
-            ? item.addons.map(addon => `   • ${addon.name}${Number(addon.price || 0) > 0 ? `: +${formatRp(addon.price)}` : ''}`).join('\n')
-            : '   • Tidak ada';
-          return `${index + 1}. *${item.title}*
-   Jumlah        : ${item.qty}x
-   Harga dasar   : ${formatRp(basePrice)}
-   Tambahan:
-${addonLines}
-   Total produk  : ${formatRp(Number(item.unitPrice) * Number(item.qty))}`;
-      }).join('\n\n');
-
-      let buyerDataStr = '';
-      for (const f of checkoutFields) {
-          const field = document.getElementById('co_' + f.id);
-          const val = field ? field.value.trim() : '';
-          if (f.req && !val) {
-              alert('Mohon isi kolom wajib: ' + f.label);
-              if (field) field.focus();
-              return;
-          }
-          buyerDataStr += `- ${f.label}: ${val || '-'}\n`;
-      }
-
-      const outletLines = selectedOutlet
-        ? `Nama gerai: ${selectedOutlet.name}\nAlamat gerai: ${selectedOutlet.address}\n${selectedOutlet.note ? 'Catatan gerai: ' + selectedOutlet.note + '\\n' : ''}`
-        : 'Gerai / outlet: Belum dipilih\\n';
-      if ((Array.isArray(uiSettings.outlets) ? uiSettings.outlets : []).length && !selectedOutlet) {
-        alert('Pilih gerai / outlet terlebih dahulu sebelum konfirmasi pesanan.');
-        // Buka pemilih outlet yang benar di atas checkout, tanpa menutup checkout,
-        // mengosongkan keranjang, atau mereset pilihan QRIS.
-        toggleOutletChoices();
-        return;
-      }
-
       try {
         const { error } = await supabaseClient.from('palugada_orders').insert(orderRecord);
         if (error) throw error;
-        orderSaved = true;
       } catch (error) {
-        console.error('Penyimpanan pesanan ke Supabase gagal:', error);
-        alert('Pesanan gagal disimpan ke riwayat. Coba lagi sebelum konfirmasi WhatsApp. Detail: ' + error.message);
+        console.error('Penyimpanan pesanan gagal:', error);
+        alert('Pesanan gagal disimpan ke panel admin. Silakan coba lagi. Detail: ' + error.message);
         return;
       }
-
-      let msg = `Halo Admin *${uiSettings.headerName}*, saya ingin konfirmasi pesanan setelah pembayaran QRIS.\nKode pesanan: *${orderRef}*\n\n` +
-                `━━━━━━━━━━━━━━━━━━\n` +
-                `*🏪 GERAI / OUTLET PENGAMBILAN*\n` +
-                outletLines + `\n━━━━━━━━━━━━━━━━━━\n` +
-                `*🛍️ RINCIAN PESANAN*\n` +
-                `━━━━━━━━━━━━━━━━━━\n\n` +
-                `${productListText}\n\n` +
-                `━━━━━━━━━━━━━━━━━━\n` +
-                `*💰 RINGKASAN PEMBAYARAN*\n\n` +
-                `Total harga : ${formatRp(finalTotal + discountAmount)}\n` +
-                `Diskon      : -${formatRp(discountAmount)}\n` +
-                `Kantong belanja: ${shoppingBagSelected ? formatRp(SHOPPING_BAG_FEE) : 'Tidak dipilih (Rp 0)'}\n` +
-                `*TOTAL BAYAR: ${formatRp(finalTotal)}*\n\n` +
-                `━━━━━━━━━━━━━━━━━━\n` +
-                `*👤 DATA PEMBELI*\n\n` +
-                buyerDataStr +
-                `Metode bayar: QRIS Otomatis\n\n` +
-                `_(Bukti pembayaran QRIS saya lampirkan setelah ini.)_`;
-
-      window.open(`https://wa.me/${storeWA}?text=${encodeURIComponent(msg)}`, '_blank');
       openBuyerOrders(orderRef);
     }
 
@@ -1965,16 +1910,23 @@ ${addonLines}
         if (!data || !data.length) { target.innerHTML = '<p style="padding:18px;text-align:center;color:#78716c;">Belum ada pesanan masuk.</p>'; return; }
         target.innerHTML = data.map(order => {
           const buyer = order.buyer_data || {}; const outlet = order.outlet || {};
-          const buyerName = buyer['Nama Lengkap'] || buyer['Nama'] || 'Pelanggan';
+          const buyerName = buyer['Nama Lengkap'] || buyer['Nama'] || buyer['Nama Pemesan'] || 'Pelanggan';
+          const buyerDetails = Object.entries(buyer).filter(([k,v]) => String(v || '').trim()).map(([k,v]) => '<div><b>' + escapeHTML(k) + ':</b> ' + escapeHTML(v) + '</div>').join('');
           const items = Array.isArray(order.items) ? order.items : [];
-          const itemText = items.map(item => String(item.quantity) + 'x ' + escapeHTML(item.title)).join('<br>');
+          const itemText = items.map(item => {
+            const addons = Array.isArray(item.addons) ? item.addons : [];
+            const addonText = addons.length ? addons.map(addon => '<div style="padding-left:12px;color:#57534e;">+ ' + escapeHTML(addon.name || addon.title || 'Tambahan') + ' (' + formatRp(Number(addon.price || 0)) + ')</div>').join('') : '<div style="padding-left:12px;color:#a8a29e;">Tanpa tambahan</div>';
+            return '<div style="padding:10px 0;border-bottom:1px dashed #e7e5e4;"><b>' + escapeHTML(item.title) + '</b><div>' + Number(item.quantity || 0) + ' × ' + formatRp(item.unit_price || 0) + ' = <b>' + formatRp(item.line_total || 0) + '</b></div>' + addonText + '</div>';
+          }).join('');
           const code = escapeHTML(order.order_code || '-');
           const statuses = ['Menunggu diproses admin','Sudah dipesan ke Kopi Kenangan','Sedang disiapkan','Siap diambil','Selesai','Dibatalkan'];
           const options = statuses.map(v => '<option value="' + escapeHTML(v) + '" ' + (order.status === v ? 'selected' : '') + '>' + escapeHTML(v) + '</option>').join('');
           return '<article style="background:#fff;border:1px solid #e7e5e4;border-radius:14px;padding:14px;margin-bottom:12px;">' +
             '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>' + code + '</strong><strong>' + formatRp(order.total || 0) + '</strong></div>' +
-            '<p style="font-size:12px;color:#57534e;margin:8px 0;">' + escapeHTML(buyerName) + ' · ' + escapeHTML(outlet.name || 'Outlet belum tercatat') + '<br>' + escapeHTML(outlet.address || '') + '</p>' +
-            '<div style="font-size:12px;line-height:1.6;margin:8px 0;">' + itemText + '</div>' +
+            '<div style="font-size:12px;color:#57534e;margin:8px 0;"><b>Pembeli:</b> ' + escapeHTML(buyerName) + '<br><b>Outlet:</b> ' + escapeHTML(outlet.name || 'Outlet belum tercatat') + '<br>' + escapeHTML(outlet.address || '') + '</div>' +
+            '<details style="margin:10px 0;padding:10px;background:#fafaf9;border-radius:10px;"><summary style="font-weight:800;cursor:pointer;">Data pembeli & nomor WhatsApp</summary><div style="font-size:12px;line-height:1.7;margin-top:8px;">' + buyerDetails + '</div></details>' +
+            '<div style="font-size:13px;line-height:1.6;margin:8px 0;"><b>Rincian produk</b>' + itemText + '</div>' +
+            '<div style="font-size:12px;line-height:1.7;background:#fafaf9;padding:10px;border-radius:10px;"><div>Subtotal: ' + formatRp(order.subtotal || 0) + '</div><div>Diskon: -' + formatRp(order.discount || 0) + '</div><div>Kantong belanja: ' + (order.shopping_bag ? 'Ya' : 'Tidak') + '</div><b>Total: ' + formatRp(order.total || 0) + '</b><div>Pembayaran: ' + escapeHTML(order.payment_method || '-') + ' · ' + escapeHTML(order.payment_status || '-') + '</div></div>' +
             '<label style="display:block;font-size:11px;font-weight:700;margin:10px 0 5px;">Status pesanan</label>' +
             '<select id="orderStatus_' + order.id + '" class="form-input">' + options + '</select>' +
             '<label style="display:block;font-size:11px;font-weight:700;margin:10px 0 5px;">Nomor antrean (jika sudah tersedia)</label>' +

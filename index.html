@@ -54,10 +54,10 @@
 
     /* Hero */
     .hero { background: linear-gradient(180deg, #2b1002, #451a03); color: #fff; padding: 40px 16px; position: relative; background-size: cover; background-position: center; background-repeat: no-repeat; }
-    /* Tampilkan seluruh gambar banner sesuai rasio asli; jangan crop atau stretch. */
+    /* Gambar banner memenuhi area hero tanpa ruang kosong di atas/bawah. */
     .hero.has-custom-bg {
       background-blend-mode: normal;
-      background-size: contain !important;
+      background-size: cover !important;
       background-position: center center !important;
       background-repeat: no-repeat !important;
       background-color: #2b1002;

@@ -1881,6 +1881,14 @@
     function closeBuyerOrders() {
       const panel = document.getElementById('buyerTrackingPanel');
       if (panel) panel.style.display = 'none';
+      const input = document.getElementById('buyerOrderCodeInput');
+      const content = document.getElementById('buyerTrackingContent');
+      const notice = document.getElementById('buyerNewOrderNotice');
+      if (input) input.value = '';
+      if (content) content.innerHTML = '';
+      if (notice) { notice.style.display = 'none'; notice.innerHTML = ''; }
+      document.body.style.overflow = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     async function loadBuyerTracking() {
       const input = document.getElementById('buyerOrderCodeInput');

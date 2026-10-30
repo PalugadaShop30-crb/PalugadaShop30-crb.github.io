@@ -960,6 +960,12 @@
     let tempVariantProduct = null;
     let tempVariantQty = 1;
 
+    function escapeHTML(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+    }
+
     function formatRp(num) { return 'Rp ' + Number(num).toLocaleString('id-ID'); }
 
     // ==========================================

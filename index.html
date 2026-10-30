@@ -621,6 +621,14 @@
   </div>
 
 
+  <section id="buyerTrackingPanel" style="display:none;position:fixed;inset:0;z-index:9999;background:#f5f5f4;overflow:auto;padding:20px 14px;">
+    <div style="max-width:560px;margin:24px auto;background:#fff;border:1px solid #e7e5e4;border-radius:18px;padding:20px;box-shadow:0 8px 28px rgba(0,0,0,.08);">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;"><strong style="font-size:18px;color:#78350f;">Pantau Pesanan</strong><button onclick="document.getElementById('buyerTrackingPanel').style.display='none'" style="border:0;background:#f5f5f4;border-radius:9px;padding:8px 12px;">Tutup</button></div>
+      <div id="buyerTrackingContent" style="margin-top:18px;">Memuat status pesanan...</div>
+      <button onclick="loadBuyerTracking()" style="margin-top:16px;width:100%;padding:12px;border:1px solid #d6d3d1;border-radius:10px;background:#fff;font-weight:700;">Perbarui status</button>
+    </div>
+  </section>
+
   <!-- MODAL ADMIN SUPER LENGKAP -->
   <!-- ========================================== -->
   <div id="adminModal" class="modal-overlay">
@@ -1587,6 +1595,8 @@
     async function confirmOrderWA() {
       const finalTotal = calculateTotals();
       const orderRef = 'PK-' + Date.now().toString(36).toUpperCase();
+      const trackingKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2));
+      const trackingUrl = window.location.origin + window.location.pathname + '?track=' + encodeURIComponent(orderRef) + '&key=' + encodeURIComponent(trackingKey);
       const buyerData = {};
       for (const f of checkoutFields) {
         const field = document.getElementById('co_' + f.id);
@@ -1598,7 +1608,7 @@
         line_total: Number(item.unitPrice) * Number(item.qty)
       }));
       const orderRecord = {
-        order_code: orderRef, status: 'Menunggu diproses admin',
+        order_code: orderRef, tracking_token: trackingKey, status: 'Menunggu diproses admin',
         buyer_data: buyerData, outlet: selectedOutlet || {},
         items: orderItems, subtotal: Number(finalTotal + discountAmount),
         discount: Number(discountAmount), shopping_bag: !!shoppingBagSelected,
@@ -1901,6 +1911,34 @@ ${addonLines}
         }
     }
 
+    async function loadBuyerTracking() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('track'); const key = params.get('key');
+      const panel = document.getElementById('buyerTrackingPanel');
+      const target = document.getElementById('buyerTrackingContent');
+      if (!code || !key || !panel || !target) return;
+      panel.style.display = 'block';
+      target.innerHTML = '<p style="color:#78716c;">Memuat status pesanan...</p>';
+      try {
+        const { data, error } = await supabaseClient.rpc('get_public_order_tracking', { p_order_code: code, p_tracking_token: key });
+        if (error) throw error;
+        const order = Array.isArray(data) ? data[0] : data;
+        if (!order) throw new Error('Link pelacakan tidak valid atau pesanan tidak ditemukan.');
+        const steps = ['Menunggu diproses admin','Sudah dipesan ke Kopi Kenangan','Sedang disiapkan','Siap diambil','Selesai'];
+        const current = steps.indexOf(order.status);
+        const statuses = steps.map((step, index) => '<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f0eeeb;"><span style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:' + (index <= current ? '#15803d' : '#e7e5e4') + ';color:white;font-weight:800;">' + (index <= current ? '✓' : (index+1)) + '</span><span style="font-weight:' + (index === current ? '800' : '500') + ';color:' + (index <= current ? '#292524' : '#a8a29e') + ';">' + escapeHTML(step) + '</span></div>').join('');
+        target.innerHTML = '<p style="color:#78716c;font-size:12px;">Kode pesanan</p><h2 style="font-size:26px;margin:2px 0 14px;">' + escapeHTML(order.order_code) + '</h2>' +
+          '<div style="background:#fafaf9;border-radius:12px;padding:12px;margin-bottom:14px;"><strong>' + escapeHTML(order.status) + '</strong>' +
+          (order.queue_number ? '<p style="margin-top:6px;">Nomor antrean: <strong>' + escapeHTML(order.queue_number) + '</strong></p>' : '') +
+          (order.outlet && order.outlet.name ? '<p style="margin-top:6px;font-size:12px;color:#78716c;">' + escapeHTML(order.outlet.name) + ' · ' + escapeHTML(order.outlet.address || '') + '</p>' : '') + '</div>' +
+          '<h3 style="font-size:14px;margin-bottom:6px;">Perkembangan pesanan</h3>' + statuses +
+          (order.status === 'Dibatalkan' ? '<p style="color:#b91c1c;margin-top:12px;font-weight:700;">Pesanan dibatalkan. Hubungi admin untuk informasi lebih lanjut.</p>' : '') +
+          '<p style="font-size:11px;color:#a8a29e;margin-top:14px;">Terakhir diperbarui: ' + new Date(order.updated_at || order.created_at).toLocaleString('id-ID') + '</p>';
+      } catch (error) {
+        target.innerHTML = '<p style="color:#b91c1c;">' + escapeHTML(error.message) + '</p>';
+      }
+    }
+
     async function loadAdminOrders() {
       const target = document.getElementById('adminOrdersList');
       if (!target) return;
@@ -1938,6 +1976,8 @@ ${addonLines}
         if (error) throw error; notify('Status dan nomor antrean berhasil diperbarui.'); await loadAdminOrders();
       } catch (error) { alert('Pembaruan gagal: ' + error.message + '. Pastikan kolom queue_number sudah ditambahkan di Supabase.'); }
     }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadBuyerTracking); else loadBuyerTracking();
+
     function renderAdminTable() {
       const tbody = document.getElementById('adminTableBody');
       tbody.innerHTML = products.map(p => {

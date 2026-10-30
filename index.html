@@ -1621,17 +1621,6 @@
         total: Number(finalTotal), payment_method: 'QRIS',
         payment_status: 'Menunggu verifikasi', source: 'PalugadaShop30'
       };
-      let orderSaved = false;
-      try {
-        const { error } = await supabaseClient.from('palugada_orders').insert(orderRecord);
-        if (error) throw error;
-        orderSaved = true;
-      } catch (error) {
-        console.error('Penyimpanan pesanan ke Supabase gagal:', error);
-        alert('Pesanan gagal disimpan ke riwayat. Coba lagi sebelum konfirmasi WhatsApp. Detail: ' + error.message);
-        return;
-      }
-
       let productListText = cart.map((item, index) => {
           const product = products.find(p => String(p.id) === String(item.productId));
           const basePrice = product ? Number(product.price) : Number(item.unitPrice);
@@ -1667,6 +1656,16 @@ ${addonLines}
         // Buka pemilih outlet yang benar di atas checkout, tanpa menutup checkout,
         // mengosongkan keranjang, atau mereset pilihan QRIS.
         toggleOutletChoices();
+        return;
+      }
+
+      try {
+        const { error } = await supabaseClient.from('palugada_orders').insert(orderRecord);
+        if (error) throw error;
+        orderSaved = true;
+      } catch (error) {
+        console.error('Penyimpanan pesanan ke Supabase gagal:', error);
+        alert('Pesanan gagal disimpan ke riwayat. Coba lagi sebelum konfirmasi WhatsApp. Detail: ' + error.message);
         return;
       }
 

@@ -641,9 +641,20 @@
         <button onclick="switchAdminTab('tabForm')" class="admin-tab" id="btnTabForm">Form Checkout</button>
         <button onclick="switchAdminTab('tabSetting')" class="admin-tab" id="btnTabSetting">WA & QRIS</button>
         <button onclick="switchAdminTab('tabOutlets')" class="admin-tab" id="btnTabOutlets">Gerai / Outlet</button>
+        <button onclick="switchAdminTab('tabOrders');loadAdminOrders()" class="admin-tab" id="btnTabOrders">Pesanan KopKen</button>
       </div>
 
       <!-- TAB 1: KELOLA PRODUK -->
+
+      <div id="tabOrders" style="display:none;">
+        <div style="background:#fff;padding:14px;border:1px solid #e7e5e4;border-radius:14px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><strong>Pesanan masuk Palugada</strong>
+            <button type="button" onclick="loadAdminOrders()" style="padding:8px 12px;border:1px solid #d6d3d1;border-radius:9px;background:#fafaf9;font-weight:700;">Muat ulang</button>
+          </div>
+          <p style="font-size:12px;color:#78716c;margin-top:6px;">Masukkan pesanan secara manual ke aplikasi Kopi Kenangan. Nomor antrean diisi setelah tersedia di aplikasi resmi.</p>
+        </div>
+        <div id="adminOrdersList"><p style="padding:16px;color:#78716c;">Tekan Muat ulang untuk mengambil pesanan.</p></div>
+      </div>
       <div id="tabProduk" style="display: block;">
         <div style="background: #fff; padding: 16px; border-radius: 16px; border: 1px solid #e7e5e4; margin-bottom: 20px;">
             <div class="admin-section-title"><i class="fa-solid fa-box-open"></i> Tambah / Edit Produk</div>
@@ -1867,7 +1878,7 @@ ${addonLines}
     }
 
     function switchAdminTab(tabId) {
-        ['tabProduk', 'tabKategori', 'tabUI', 'tabForm', 'tabSetting', 'tabOutlets'].forEach(id => {
+        ['tabProduk', 'tabKategori', 'tabUI', 'tabForm', 'tabSetting', 'tabOutlets', 'tabOrders'].forEach(id => {
             document.getElementById(id).style.display = 'none';
         });
         document.getElementById(tabId).style.display = 'block';
@@ -1884,6 +1895,43 @@ ${addonLines}
         }
     }
 
+    async function loadAdminOrders() {
+      const target = document.getElementById('adminOrdersList');
+      if (!target) return;
+      target.innerHTML = '<p style="padding:16px;color:#78716c;">Memuat pesanan...</p>';
+      try {
+        const { data, error } = await supabaseClient.from('palugada_orders').select('*').order('created_at', { ascending: false }).limit(100);
+        if (error) throw error;
+        if (!data || !data.length) { target.innerHTML = '<p style="padding:18px;text-align:center;color:#78716c;">Belum ada pesanan masuk.</p>'; return; }
+        target.innerHTML = data.map(order => {
+          const buyer = order.buyer_data || {}; const outlet = order.outlet || {};
+          const buyerName = buyer['Nama Lengkap'] || buyer['Nama'] || 'Pelanggan';
+          const items = Array.isArray(order.items) ? order.items : [];
+          const itemText = items.map(item => String(item.quantity) + 'x ' + escapeHTML(item.title)).join('<br>');
+          const code = escapeHTML(order.order_code || '-');
+          const statuses = ['Menunggu diproses admin','Sudah dipesan ke Kopi Kenangan','Sedang disiapkan','Siap diambil','Selesai','Dibatalkan'];
+          const options = statuses.map(v => '<option value="' + escapeHTML(v) + '" ' + (order.status === v ? 'selected' : '') + '>' + escapeHTML(v) + '</option>').join('');
+          return '<article style="background:#fff;border:1px solid #e7e5e4;border-radius:14px;padding:14px;margin-bottom:12px;">' +
+            '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>' + code + '</strong><strong>' + formatRp(order.total || 0) + '</strong></div>' +
+            '<p style="font-size:12px;color:#57534e;margin:8px 0;">' + escapeHTML(buyerName) + ' · ' + escapeHTML(outlet.name || 'Outlet belum tercatat') + '<br>' + escapeHTML(outlet.address || '') + '</p>' +
+            '<div style="font-size:12px;line-height:1.6;margin:8px 0;">' + itemText + '</div>' +
+            '<label style="display:block;font-size:11px;font-weight:700;margin:10px 0 5px;">Status pesanan</label>' +
+            '<select id="orderStatus_' + order.id + '" class="form-input">' + options + '</select>' +
+            '<label style="display:block;font-size:11px;font-weight:700;margin:10px 0 5px;">Nomor antrean (jika sudah tersedia)</label>' +
+            '<input id="orderQueue_' + order.id + '" class="form-input" value="' + escapeHTML(order.queue_number || '') + '" placeholder="Contoh: 023">' +
+            '<button type="button" onclick="updateAdminOrder(' + order.id + ')" class="btn-buy" style="margin-top:10px;">Simpan pembaruan</button>' +
+            '<p style="font-size:10px;color:#a8a29e;margin-top:8px;">' + new Date(order.created_at).toLocaleString('id-ID') + '</p></article>';
+        }).join('');
+      } catch (error) { target.innerHTML = '<p style="padding:14px;color:#b91c1c;">Gagal memuat pesanan: ' + escapeHTML(error.message) + '</p>'; }
+    }
+
+    async function updateAdminOrder(id) {
+      const statusEl = document.getElementById('orderStatus_' + id); const queueEl = document.getElementById('orderQueue_' + id);
+      try {
+        const { error } = await supabaseClient.from('palugada_orders').update({ status: statusEl.value, queue_number: queueEl.value.trim(), updated_at: new Date().toISOString() }).eq('id', id);
+        if (error) throw error; notify('Status dan nomor antrean berhasil diperbarui.'); await loadAdminOrders();
+      } catch (error) { alert('Pembaruan gagal: ' + error.message + '. Pastikan kolom queue_number sudah ditambahkan di Supabase.'); }
+    }
     function renderAdminTable() {
       const tbody = document.getElementById('adminTableBody');
       tbody.innerHTML = products.map(p => {

@@ -1567,8 +1567,34 @@
       }
     }
 
-    function confirmOrderWA() {
+    async function confirmOrderWA() {
       const finalTotal = calculateTotals();
+      const orderRef = 'PK-' + Date.now().toString(36).toUpperCase();
+      const buyerData = {};
+      for (const f of checkoutFields) {
+        const field = document.getElementById('co_' + f.id);
+        buyerData[f.label] = field ? field.value.trim() : '';
+      }
+      const orderItems = cart.map(item => ({
+        product_id: item.productId, title: item.title, quantity: Number(item.qty),
+        unit_price: Number(item.unitPrice), addons: item.addons || [],
+        line_total: Number(item.unitPrice) * Number(item.qty)
+      }));
+      const orderRecord = {
+        order_code: orderRef, status: 'Menunggu diproses admin',
+        buyer_data: buyerData, outlet: selectedOutlet || {},
+        items: orderItems, subtotal: Number(finalTotal + discountAmount),
+        discount: Number(discountAmount), shopping_bag: !!shoppingBagSelected,
+        total: Number(finalTotal), payment_method: 'QRIS',
+        payment_status: 'Menunggu verifikasi', source: 'PalugadaShop30'
+      };
+      try {
+        const { error } = await supabaseClient.from('palugada_orders').insert(orderRecord);
+        if (error) throw error;
+      } catch (error) {
+        console.error('Penyimpanan pesanan ke Supabase gagal:', error);
+        alert('Pesanan belum tersimpan ke sistem pelacakan. Pesanan tetap bisa diteruskan melalui WhatsApp. Pastikan tabel palugada_orders sudah dibuat di Supabase.');
+      }
 
       let productListText = cart.map((item, index) => {
           const product = products.find(p => String(p.id) === String(item.productId));
@@ -1608,7 +1634,7 @@ ${addonLines}
         return;
       }
 
-      let msg = `Halo Admin *${uiSettings.headerName}*, saya ingin konfirmasi pesanan setelah pembayaran QRIS.\n\n` +
+      let msg = `Halo Admin *${uiSettings.headerName}*, saya ingin konfirmasi pesanan setelah pembayaran QRIS.\nKode pesanan: *${orderRef}*\n\n` +
                 `━━━━━━━━━━━━━━━━━━\n` +
                 `*🏪 GERAI / OUTLET PENGAMBILAN*\n` +
                 outletLines + `\n━━━━━━━━━━━━━━━━━━\n` +

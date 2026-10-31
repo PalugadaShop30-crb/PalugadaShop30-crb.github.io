@@ -969,6 +969,8 @@
     let cart = [];
     let discountAmount = 0;
     let shoppingBagSelected = false;
+    // Simpan pilihan tampilan QRIS saat pembeli kembali mengedit keranjang.
+    let qrisPaymentExpanded = false;
     const SHOPPING_BAG_FEE = 1000;
     let activeCat = 'all';
 
@@ -1452,12 +1454,13 @@
       renderCheckoutForm();
       renderCheckoutSummary();
       calculateTotals();
-      // Pertahankan status QRIS dan gambar saat checkout dibuka kembali.
+      // Pulihkan panel QRIS sesuai pilihan terakhir, termasuk setelah kembali ke keranjang.
       const qrisBox = document.getElementById('qrisBox');
       const qrisOption = document.getElementById('checkoutQrisOption');
-      if (qrisBox && !qrisBox.hidden) {
-        qrisOption.classList.add('selected');
-        qrisOption.setAttribute('aria-expanded', 'true');
+      if (qrisBox && qrisOption) {
+        qrisBox.hidden = !qrisPaymentExpanded;
+        qrisOption.classList.toggle('selected', qrisPaymentExpanded);
+        qrisOption.setAttribute('aria-expanded', String(qrisPaymentExpanded));
       }
       closeModal('modalCart');
       document.getElementById('modalCheckout').classList.add('open');
@@ -1469,6 +1472,8 @@
       const qrisImage = document.getElementById('qrisDisplayFinal');
       if (!qrisBox || !qrisOption || !qrisImage) return;
 
+      // Ingat bahwa pembeli sudah membuka QRIS agar tetap tampil setelah kembali edit.
+      qrisPaymentExpanded = true;
       // QRIS boleh dibuka berkali-kali; jangan mengunci tombol saat gambar sedang diproses.
       qrisBox.hidden = false;
       qrisOption.classList.add('selected');
@@ -1895,6 +1900,14 @@
       cart = [];
       discountAmount = 0;
       shoppingBagSelected = false;
+      qrisPaymentExpanded = false;
+      const qrisBoxAfterOrder = document.getElementById('qrisBox');
+      const qrisOptionAfterOrder = document.getElementById('checkoutQrisOption');
+      if (qrisBoxAfterOrder) qrisBoxAfterOrder.hidden = true;
+      if (qrisOptionAfterOrder) {
+        qrisOptionAfterOrder.classList.remove('selected');
+        qrisOptionAfterOrder.setAttribute('aria-expanded', 'false');
+      }
       selectedOutlet = null;
       inlineAddonEditorId = null;
       if (typeof updateCartBadge === 'function') updateCartBadge();

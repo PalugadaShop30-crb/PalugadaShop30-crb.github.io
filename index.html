@@ -1445,6 +1445,15 @@
     }
 
     function backToEditCart() {
+      // Saat kembali mengedit keranjang, tutup QRIS. Pembeli perlu membukanya lagi secara manual.
+      qrisPaymentExpanded = false;
+      const qrisBox = document.getElementById('qrisBox');
+      const qrisOption = document.getElementById('checkoutQrisOption');
+      if (qrisBox) qrisBox.hidden = true;
+      if (qrisOption) {
+        qrisOption.classList.remove('selected');
+        qrisOption.setAttribute('aria-expanded', 'false');
+      }
       closeModal('modalCheckout');
       openCartModal();
     }
@@ -1454,13 +1463,14 @@
       renderCheckoutForm();
       renderCheckoutSummary();
       calculateTotals();
-      // Pulihkan panel QRIS sesuai pilihan terakhir, termasuk setelah kembali ke keranjang.
+      // Setiap masuk checkout dari keranjang, QRIS mulai tertutup sampai dipilih manual.
+      qrisPaymentExpanded = false;
       const qrisBox = document.getElementById('qrisBox');
       const qrisOption = document.getElementById('checkoutQrisOption');
-      if (qrisBox && qrisOption) {
-        qrisBox.hidden = !qrisPaymentExpanded;
-        qrisOption.classList.toggle('selected', qrisPaymentExpanded);
-        qrisOption.setAttribute('aria-expanded', String(qrisPaymentExpanded));
+      if (qrisBox) qrisBox.hidden = true;
+      if (qrisOption) {
+        qrisOption.classList.remove('selected');
+        qrisOption.setAttribute('aria-expanded', 'false');
       }
       closeModal('modalCart');
       document.getElementById('modalCheckout').classList.add('open');

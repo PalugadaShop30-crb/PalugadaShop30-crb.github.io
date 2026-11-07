@@ -2225,12 +2225,28 @@
         savedProduct = { id: Date.now().toString(), title, cat, price, orig, badge, desc, img, addons: newAddons, optionGroups };
       }
       try {
-        const { error } = await supabaseClient.from('products').upsert(productToRow(savedProduct));
+        const payload = productToRow(savedProduct);
+        const { data: savedRow, error } = await supabaseClient
+          .from('products')
+          .upsert(payload)
+          .select('id,addons')
+          .single();
         if (error) throw error;
+
+        // Pastikan pilihan grup benar-benar ikut tersimpan, bukan hanya menerima respons sukses.
+        const storedGroups = ((Array.isArray(savedRow && savedRow.addons) ? savedRow.addons : [])
+          .find(item => item && item.__optionGroups) || {}).__optionGroups || [];
+        if (optionGroups.length && JSON.stringify(storedGroups) !== JSON.stringify(optionGroups)) {
+          throw new Error('Data produk tersimpan, tetapi pilihan tambahan tidak cocok saat dibaca kembali dari database. Periksa izin/format kolom addons di Supabase.');
+        }
         await loadSharedData();
+        const refreshed = products.find(p => String(p.id) === String(savedProduct.id));
+        if (optionGroups.length && JSON.stringify((refreshed && refreshed.optionGroups) || []) !== JSON.stringify(optionGroups)) {
+          throw new Error('Database menerima simpanan, tetapi data pilihan belum terbaca kembali. Silakan periksa struktur kolom addons.');
+        }
         resetProductForm();
         renderAdminTable();
-        notify('Produk berhasil disimpan ke database bersama!');
+        notify('Produk dan pilihan berhasil disimpan serta diverifikasi dari database!');
       } catch (error) {
         alert('Produk gagal disimpan: ' + error.message);
       }

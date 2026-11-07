@@ -977,6 +977,28 @@
     let tempVariantProduct = null;
     let tempVariantQty = 1;
 
+    // Template pilihan minuman mengikuti format Jasa.Co. Harga tambahan bisa diubah dari Admin Panel.
+    function getDefaultDrinkOptionGroups() {
+      return [
+        { name: 'Pilihan Tersedia', options: [{ name: 'Ice', price: 0 }, { name: 'Hot', price: 0 }] },
+        { name: 'Ukuran Cup', options: [{ name: 'Regular', price: 0 }, { name: 'Large', price: 7000 }] },
+        { name: 'Beans', options: [{ name: 'Kenangan Blend', price: 0 }, { name: 'Juwara Beans', price: 3000 }] },
+        { name: 'Pilihan Susu', options: [{ name: 'Milk', price: 0 }, { name: 'Oatside', price: 3000 }] },
+        { name: 'Sugar Level', options: [{ name: 'Normal Sugar', price: 0 }, { name: 'Less Sugar', price: 0 }, { name: 'No Sugar', price: 0 }] },
+        { name: 'Ice Level', options: [{ name: 'Normal Ice', price: 0 }, { name: 'Less Ice', price: 0 }, { name: 'No Ice', price: 0 }] }
+      ];
+    }
+
+    function isDrinkProduct(product) {
+      const category = String(product && product.cat || '').toLowerCase();
+      return category !== 'digital' && category !== 'voucher' && category !== 'voucher-digital';
+    }
+
+    function getProductOptionGroups(product) {
+      if (product && Array.isArray(product.optionGroups) && product.optionGroups.length) return product.optionGroups;
+      return isDrinkProduct(product) ? getDefaultDrinkOptionGroups() : [];
+    }
+
     function escapeHTML(value) {
       return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -1160,7 +1182,7 @@
         }
 
         const addonCont = document.getElementById('varAddonsContainer');
-        const groups = tempVariantProduct.optionGroups || [];
+        const groups = getProductOptionGroups(tempVariantProduct);
         const legacyAddons = tempVariantProduct.addons || [];
         const selected = existingItem && existingItem.addons ? existingItem.addons : [];
         let html = '';
@@ -1262,7 +1284,7 @@
             const productAddons = product && Array.isArray(product.addons) ? product.addons : [];
             const selectedAddons = item.addons || [];
             const addonHtml = selectedAddons.length ? `<div class="cart-item-addon">Tambahan: ${selectedAddons.map(a => a.name).join(', ')}</div>` : '<div class="cart-item-addon">Tanpa tambahan</div>';
-            const productGroups = product && Array.isArray(product.optionGroups) ? product.optionGroups : [];
+            const productGroups = product ? getProductOptionGroups(product) : [];
             const editorHtml = inlineAddonEditorId === item.cartId
               ? `<div class="cart-addon-editor">
                   ${productGroups.map((group, gi) => `
@@ -2179,7 +2201,7 @@
       
       if (!title || !price) return alert('Nama dan Harga wajib diisi!');
 
-      const optionGroups = readAdminOptionGroups();
+      let optionGroups = readAdminOptionGroups();\n      if (!optionGroups.length && isDrinkProduct({ cat })) optionGroups = getDefaultDrinkOptionGroups();
       let newAddons = [];
       document.querySelectorAll('#adminAddonsContainer .addon-row-admin').forEach(row => {
           const nameInput = row.querySelector('.adm-addon-name');
@@ -2228,7 +2250,7 @@
       document.getElementById('imgPreview').style.display = 'block';
 
       document.getElementById('adminOptionGroupsContainer').innerHTML = '';
-      if(p.optionGroups) p.optionGroups.forEach(group => addOptionGroupRow(group));
+      const editableGroups = getProductOptionGroups(p);\n      if(editableGroups) editableGroups.forEach(group => addOptionGroupRow(group));
       document.getElementById('adminAddonsContainer').innerHTML = '';
       if(p.addons) p.addons.forEach(a => addAddonRow(a.name, a.price));
       document.getElementById('tabProduk').scrollIntoView();

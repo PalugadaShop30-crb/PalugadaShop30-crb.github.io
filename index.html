@@ -990,14 +990,14 @@
     }
 
     function isDrinkProduct(product) {
-      const category = String(product && product.cat || '').toLowerCase();
       const title = String(product && product.title || '').toLowerCase();
-      if (/voucher|saldo|kupon|gift ?card/.test(title)) return false;
-      return category !== 'digital' && category !== 'voucher' && category !== 'voucher-digital';
+      if (/voucher|saldo|kupon|gift ?card|croissant|roti|bread|pastry|cake|donut|donat|cookie|cookies|sandwich|snack/.test(title)) return false;
+      return /kopi|coffee|latte|espresso|americano|cappuccino|cappucino|mocha|matcha|tea|teh|milk|susu|chocolate|cokelat|frappe|frappuccino|macchiato|minuman|drink|juice|jus|smoothie/.test(title);
     }
 
     function getProductOptionGroups(product) {
-      if (product && Array.isArray(product.optionGroups) && product.optionGroups.length) return product.optionGroups;
+      // Array kosong berarti admin memang menghapus semua grup; jangan isi ulang otomatis.
+      if (product && Array.isArray(product.optionGroups)) return product.optionGroups;
       return isDrinkProduct(product) ? getDefaultDrinkOptionGroups() : [];
     }
 
@@ -1744,7 +1744,10 @@
         price: Number(row.price), orig: row.orig === null ? null : Number(row.orig),
         badge: row.badge || '', desc: row.description || '', img: row.img || '',
         addons: (Array.isArray(row.addons) ? row.addons : []).filter(a => !a.__optionGroups),
-        optionGroups: ((Array.isArray(row.addons) ? row.addons : []).find(a => a.__optionGroups) || {}).__optionGroups || []
+        optionGroups: (() => {
+          const stored = (Array.isArray(row.addons) ? row.addons : []).find(a => a && Object.prototype.hasOwnProperty.call(a, '__optionGroups'));
+          return stored ? (Array.isArray(stored.__optionGroups) ? stored.__optionGroups : []) : undefined;
+        })()
       };
     }
 
@@ -1753,7 +1756,7 @@
         id: String(product.id), title: product.title, cat: product.cat || null,
         price: Number(product.price), orig: product.orig === '' ? null : product.orig,
         badge: product.badge || null, description: product.desc || '',
-        img: product.img || '', addons: [...(product.addons || []).filter(a => !a.__optionGroups), ...((product.optionGroups || []).length ? [{ __optionGroups: product.optionGroups }] : [])]
+        img: product.img || '', addons: [...(product.addons || []).filter(a => !a.__optionGroups), { __optionGroups: Array.isArray(product.optionGroups) ? product.optionGroups : [] }]
       };
     }
 
@@ -2203,8 +2206,8 @@
       
       if (!title || !price) return alert('Nama dan Harga wajib diisi!');
 
-      let optionGroups = readAdminOptionGroups();
-      if (!optionGroups.length && isDrinkProduct({ cat, title })) optionGroups = getDefaultDrinkOptionGroups();
+      // Simpan persis grup yang ada di form, termasuk array kosong jika admin menghapus semuanya.
+      const optionGroups = readAdminOptionGroups();
       let newAddons = [];
       document.querySelectorAll('#adminAddonsContainer .addon-row-admin').forEach(row => {
           const nameInput = row.querySelector('.adm-addon-name');

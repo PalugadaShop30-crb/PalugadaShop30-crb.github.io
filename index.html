@@ -991,6 +991,8 @@
 
     function isDrinkProduct(product) {
       const category = String(product && product.cat || '').toLowerCase();
+      const title = String(product && product.title || '').toLowerCase();
+      if (/voucher|saldo|kupon|gift ?card/.test(title)) return false;
       return category !== 'digital' && category !== 'voucher' && category !== 'voucher-digital';
     }
 

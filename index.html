@@ -10,7 +10,7 @@
     // Paksa setiap kunjungan dari URL utama memakai URL versi terbaru.
     // Dijalankan di HEAD agar HTML lama tidak sempat ditampilkan terlebih dahulu.
     (function () {
-      var BUILD = '20261030-0600';
+      var BUILD = '20261107-1610';
       try {
         var current = new URL(window.location.href);
         if (current.searchParams.get('v') !== BUILD) {
@@ -879,11 +879,23 @@
         </div>
         <p id="adminLoginMessage" role="status" style="font-size:12px;color:#b91c1c;margin-bottom:12px;"></p>
         <button id="adminLoginSubmit" type="submit" class="btn-buy"><i class="fa-solid fa-right-to-bracket"></i> Masuk sebagai Admin</button>
+        <button type="button" onclick="sendAdminPasswordReset()" style="width:100%;margin-top:10px;background:transparent;border:0;color:#8b623b;font-weight:700;text-decoration:underline;cursor:pointer;">Lupa password?</button>
         <p style="font-size:11px;color:#78716c;margin-top:12px;line-height:1.5;">Akun harus dibuat di Supabase dan ditambahkan ke daftar admin. Pendaftaran publik tidak digunakan.</p>
       </form>
     </div>
   </div>
 
+  <div id="passwordRecoveryModal" class="modal-overlay" aria-label="Atur ulang password admin">
+    <div class="modal-card" style="max-width:420px;">
+      <h3 class="modal-title"><i class="fa-solid fa-lock"></i> Buat Password Baru</h3>
+      <form onsubmit="submitNewAdminPassword(event)">
+        <div class="form-group"><label class="form-label" for="newAdminPassword">Password baru</label><input id="newAdminPassword" class="form-input" type="password" minlength="8" autocomplete="new-password" required placeholder="Minimal 8 karakter"></div>
+        <div class="form-group"><label class="form-label" for="confirmAdminPassword">Ulangi password baru</label><input id="confirmAdminPassword" class="form-input" type="password" minlength="8" autocomplete="new-password" required placeholder="Ketik ulang password"></div>
+        <p id="passwordRecoveryMessage" role="status" style="font-size:12px;color:#b91c1c;margin-bottom:12px;"></p>
+        <button id="saveNewAdminPassword" type="submit" class="btn-buy">Simpan Password Baru</button>
+      </form>
+    </div>
+  </div>
   <div id="toast">Notifikasi</div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1700,6 +1712,56 @@
 
     function closeLoginModal() {
       document.getElementById('loginModal').classList.remove('open');
+    }
+
+    async function sendAdminPasswordReset() {
+      const email = document.getElementById('adminLoginEmail').value.trim();
+      const message = document.getElementById('adminLoginMessage');
+      if (!email) { message.style.color = '#b91c1c'; message.textContent = 'Masukkan email admin terlebih dahulu.'; document.getElementById('adminLoginEmail').focus(); return; }
+      message.style.color = '#78716c'; message.textContent = 'Mengirim tautan pemulihan...';
+      try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: 'https://palugadashop30-crb.github.io/' });
+        if (error) throw error;
+        message.style.color = '#047857'; message.textContent = 'Tautan reset dikirim. Periksa email masuk dan folder spam.';
+      } catch (error) { message.style.color = '#b91c1c'; message.textContent = error.message || 'Gagal mengirim tautan reset.'; }
+    }
+
+    async function submitNewAdminPassword(event) {
+      event.preventDefault();
+      const password = document.getElementById('newAdminPassword').value;
+      const confirmation = document.getElementById('confirmAdminPassword').value;
+      const message = document.getElementById('passwordRecoveryMessage');
+      const button = document.getElementById('saveNewAdminPassword');
+      if (password.length < 8) { message.textContent = 'Password minimal 8 karakter.'; return; }
+      if (password !== confirmation) { message.textContent = 'Konfirmasi password belum sama.'; return; }
+      button.disabled = true; message.style.color = '#78716c'; message.textContent = 'Menyimpan password baru...';
+      try {
+        const { error } = await supabaseClient.auth.updateUser({ password });
+        if (error) throw error;
+        await supabaseClient.auth.signOut();
+        document.getElementById('passwordRecoveryModal').classList.remove('open');
+        document.getElementById('loginModal').classList.add('open');
+        document.getElementById('adminLoginMessage').style.color = '#047857';
+        document.getElementById('adminLoginMessage').textContent = 'Password berhasil diperbarui. Silakan login dengan password baru.';
+        document.getElementById('adminLoginPassword').value = '';
+        history.replaceState(null, document.title, window.location.pathname + window.location.search);
+      } catch (error) { message.style.color = '#b91c1c'; message.textContent = error.message || 'Password gagal diperbarui.'; }
+      finally { button.disabled = false; }
+    }
+
+    async function showPasswordRecoveryIfPresent() {
+      const params = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+      if (params.get('type') !== 'recovery') return;
+      try {
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+        if (!data.session) throw new Error('Sesi pemulihan tidak ditemukan atau tautan sudah kedaluwarsa. Minta tautan reset baru.');
+        document.getElementById('passwordRecoveryModal').classList.add('open');
+      } catch (error) {
+        document.getElementById('loginModal').classList.add('open');
+        const message = document.getElementById('adminLoginMessage');
+        message.style.color = '#b91c1c'; message.textContent = error.message || 'Tautan pemulihan tidak valid.';
+      }
     }
 
     async function submitAdminLogin(event) {
@@ -2584,6 +2646,7 @@
     // INISIALISASI: tampilkan UI langsung agar halaman tidak kosong/terlihat tertinggal
     // saat koneksi Supabase lambat. Data terbaru akan menggantikan data awal begitu tersedia.
     window.addEventListener('load', () => {
+      showPasswordRecoveryIfPresent();
       renderCategories();
       applyUI();
       const waButton = document.getElementById('btnNavWA');

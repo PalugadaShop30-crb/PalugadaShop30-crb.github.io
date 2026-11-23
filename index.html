@@ -2683,9 +2683,35 @@
       renderOutlets();
 
       // Ambil data bersama di latar belakang tanpa memblokir tampilan awal.
-      loadSharedData(true).catch(error => {
-        console.error('Supabase load failed; tampilan awal tetap aktif:', error);
+      loadSharedData(true).catch(async error => {
+        console.error('Supabase load failed; gunakan katalog backup untuk tampilan:', error);
+        try {
+          const backupResponse = await fetch('./migrated-products.json', { cache: 'no-store' });
+          if (backupResponse.ok) {
+            const backupProducts = await backupResponse.json();
+            if (Array.isArray(backupProducts) && backupProducts.length) {
+              products = backupProducts.map(p => ({
+                id: String(p.id), title: p.title || '', cat: p.cat || '',
+                price: Number(p.price || 0), orig: p.orig == null ? null : Number(p.orig),
+                badge: p.badge || '', desc: p.desc || '', img: p.img || '',
+                addons: Array.isArray(p.addons) ? p.addons : [],
+                optionGroups: Array.isArray(p.optionGroups) ? p.optionGroups : []
+              }));
+              const catMap = new Map((INITIAL_CATEGORIES || []).map(c => [String(c.id), c]));
+              backupProducts.forEach(p => {
+                const id = String(p.cat || '');
+                if (id && !catMap.has(id)) catMap.set(id, { id, name: id === 'kopken' ? 'Kopi Kenangan' : id });
+              });
+              categories = Array.from(catMap.values());
+              renderCategories();
+              renderProducts();
+            }
+          }
+        } catch (backupError) {
+          console.error('Katalog backup gagal dimuat:', backupError);
+        }
       }).finally(() => {
+        renderOutlets();
         startRealtimeSync();
       });
     });

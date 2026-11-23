@@ -1831,7 +1831,7 @@
 
       // Katalog Supabase tetap menjadi sumber utama. Jika data legacy belum
       // lengkap, tambahkan produk yang hilang dari backup publik 57 produk.
-      const sharedProducts = (productResult.data || []).map(rowToProduct).filter(p => p.cat !== "digital" && !/voucher|netflix|fore coffee|^1x\\s/i.test(p.title || ""));
+      const sharedProducts = (productResult.data || []).map(rowToProduct).filter(p => p.cat !== "digital" && !/voucher|netflix|fore coffee|^1x\s/i.test(p.title || ""));
       const productMap = new Map(sharedProducts.map(p => [String(p.id), p]));
       if (productMap.size < 55) {
         try {
@@ -1853,7 +1853,7 @@
           console.warn('Backup katalog belum dapat dimuat:', backupError);
         }
       }
-      products = Array.from(productMap.values()).filter(p => p.cat !== 'digital' && !/voucher|netflix|fore coffee|^1x\\s/i.test(p.title || ''));
+      products = Array.from(productMap.values()).filter(p => p.cat !== 'digital' && !/voucher|netflix|fore coffee|^1x\s/i.test(p.title || ''));
       if (settingsResult.data) {
         const settings = settingsResult.data;
         uiSettings = { ...INITIAL_UI, ...(settings.ui_settings || {}) };

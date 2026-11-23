@@ -1830,8 +1830,36 @@
       ]);
       const failure = catResult.error || productResult.error || settingsResult.error;
       if (failure) throw failure;
-      categories = (catResult.data || []).map(c => ({ id: c.id, name: c.name }));
-      products = (productResult.data || []).map(rowToProduct);
+      // Pulihkan kategori default yang mungkin belum tersimpan di database.
+      const categoryMap = new Map((INITIAL_CATEGORIES || []).map(c => [String(c.id), { id: c.id, name: c.name }]));
+      (catResult.data || []).forEach(c => categoryMap.set(String(c.id), { id: c.id, name: c.name }));
+      categories = Array.from(categoryMap.values());
+
+      // Katalog Supabase tetap menjadi sumber utama. Jika data legacy belum
+      // lengkap, tambahkan produk yang hilang dari backup publik 57 produk.
+      const sharedProducts = (productResult.data || []).map(rowToProduct);
+      const productMap = new Map(sharedProducts.map(p => [String(p.id), p]));
+      if (productMap.size < 57) {
+        try {
+          const backupResponse = await fetch('./migrated-products.json', { cache: 'no-store' });
+          if (backupResponse.ok) {
+            const backupProducts = await backupResponse.json();
+            (Array.isArray(backupProducts) ? backupProducts : []).forEach(p => {
+              const key = String(p.id);
+              if (!productMap.has(key)) productMap.set(key, {
+                id: key, title: p.title || '', cat: p.cat || '',
+                price: Number(p.price || 0), orig: p.orig == null ? null : Number(p.orig),
+                badge: p.badge || '', desc: p.desc || '', img: p.img || '',
+                addons: Array.isArray(p.addons) ? p.addons : [],
+                optionGroups: Array.isArray(p.optionGroups) ? p.optionGroups : []
+              });
+            });
+          }
+        } catch (backupError) {
+          console.warn('Backup katalog belum dapat dimuat:', backupError);
+        }
+      }
+      products = Array.from(productMap.values());
       if (settingsResult.data) {
         const settings = settingsResult.data;
         uiSettings = { ...INITIAL_UI, ...(settings.ui_settings || {}) };

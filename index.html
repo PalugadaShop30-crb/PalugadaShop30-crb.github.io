@@ -1162,8 +1162,8 @@
           const badgeType = p => String(p.badge || '').trim().toLowerCase();
           const filtered = products.filter(p => activeCat === 'promo' ? badgeType(p).includes('promo') : /produk baru|new produk|new product/i.test(badgeType(p)));
           const sectionTitle = activeCat === 'promo' ? 'Promo Spesial' : 'Produk Baru';
-          if (filtered.length) container.innerHTML = \`<h3 class="category-header">\${sectionTitle}</h3><div class="grid">\${filtered.map(p => generateProductCard(p)).join('')}</div>\`;
-          else container.innerHTML = \`<p style="text-align:center;padding:20px;color:#999;">Belum ada \${sectionTitle.toLowerCase()}.</p>\`;
+          if (filtered.length) container.innerHTML = `<h3 class="category-header">${sectionTitle}</h3><div class="grid">${filtered.map(p => generateProductCard(p)).join('')}</div>`;
+          else container.innerHTML = `<p style="text-align:center;padding:20px;color:#999;">Belum ada ${sectionTitle.toLowerCase()}.</p>`;
       } else {
           // Tampilkan grid biasa untuk satu kategori spesifik
           let filtered = products.filter(p => p.cat === activeCat);

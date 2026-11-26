@@ -1,4 +1,4 @@
-const CACHE_NAME = 'palugada-shell-v20261126-1136';
+const CACHE_NAME = 'palugada-shell-v20261126-1205';
 
 self.addEventListener('install', event => {
   self.skipWaiting();

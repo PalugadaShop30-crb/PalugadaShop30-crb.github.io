@@ -590,7 +590,7 @@
   {
     "id": "old-52",
     "title": "Dutch Choco Kenangan Frappe",
-    "cat": "noncoffee",
+    "cat": "frappe",
     "price": 18000,
     "orig": null,
     "badge": "",
@@ -602,7 +602,7 @@
   {
     "id": "old-53",
     "title": "Vanilla Kenangan Frappe",
-    "cat": "coffee",
+    "cat": "frappe",
     "price": 15000,
     "orig": null,
     "badge": "",
@@ -614,7 +614,7 @@
   {
     "id": "old-54",
     "title": "Kopi Kenangan Mantan Frappe",
-    "cat": "coffee",
+    "cat": "frappe",
     "price": 16000,
     "orig": null,
     "badge": "",
@@ -626,7 +626,7 @@
   {
     "id": "old-55",
     "title": "Matcha Kenangan Frappe",
-    "cat": "noncoffee",
+    "cat": "frappe",
     "price": 20000,
     "orig": null,
     "badge": "",
@@ -638,7 +638,7 @@
   {
     "id": "old-56",
     "title": "Butterscotch Kenangan Frappe",
-    "cat": "coffee",
+    "cat": "frappe",
     "price": 18000,
     "orig": null,
     "badge": "",
@@ -662,7 +662,7 @@
   {
     "id": "snack-roti-susu",
     "title": "Roti Susu Manis",
-    "cat": "snack",
+    "cat": "food",
     "price": 12000,
     "orig": null,
     "badge": "",
@@ -675,7 +675,7 @@
   {
     "id": "snack-roti-keju",
     "title": "Roti Keju Manis",
-    "cat": "snack",
+    "cat": "food",
     "price": 15000,
     "orig": null,
     "badge": "",
@@ -688,7 +688,7 @@
   {
     "id": "snack-roti-coklat",
     "title": "Roti Coklat Klasik",
-    "cat": "snack",
+    "cat": "food",
     "price": 12000,
     "orig": null,
     "badge": "",
@@ -701,7 +701,7 @@
   {
     "id": "snack-roti-srikaya",
     "title": "Roti Srikaya",
-    "cat": "snack",
+    "cat": "food",
     "price": 17000,
     "orig": null,
     "badge": "",
@@ -714,7 +714,7 @@
   {
     "id": "snack-toast-wahyu",
     "title": "Kenangan Toast Wahyu Sapi",
-    "cat": "snack",
+    "cat": "toast",
     "price": 21000,
     "orig": null,
     "badge": "",
@@ -727,7 +727,7 @@
   {
     "id": "snack-toast-adam",
     "title": "Kenangan Toast Adam Ayam",
-    "cat": "snack",
+    "cat": "toast",
     "price": 21000,
     "orig": null,
     "badge": "",
@@ -740,7 +740,7 @@
   {
     "id": "snack-toast-bambang",
     "title": "Kenangan Toast Bambang Choco Cheese",
-    "cat": "snack",
+    "cat": "toast",
     "price": 19000,
     "orig": null,
     "badge": "",
@@ -753,7 +753,7 @@
   {
     "id": "snack-dark-side",
     "title": "Join The Dark Side",
-    "cat": "snack",
+    "cat": "noncoffee",
     "price": 23000,
     "orig": null,
     "badge": "",
@@ -766,7 +766,7 @@
   {
     "id": "snack-friend-chip",
     "title": "Friend-Chip",
-    "cat": "snack",
+    "cat": "noncoffee",
     "price": 19000,
     "orig": null,
     "badge": "",
@@ -779,7 +779,7 @@
   {
     "id": "snack-butter-croissant",
     "title": "Butter Croissant",
-    "cat": "snack",
+    "cat": "food",
     "price": 17000,
     "orig": null,
     "badge": "",
@@ -792,7 +792,7 @@
   {
     "id": "snack-choco-croissant",
     "title": "Chocolate Croissant",
-    "cat": "snack",
+    "cat": "food",
     "price": 21000,
     "orig": null,
     "badge": "",
@@ -805,7 +805,7 @@
   {
     "id": "snack-donut-almond",
     "title": "Donut Almond",
-    "cat": "snack",
+    "cat": "food",
     "price": 15000,
     "orig": null,
     "badge": "",
@@ -818,7 +818,7 @@
   {
     "id": "snack-donut-matcha",
     "title": "Donut Matcha",
-    "cat": "snack",
+    "cat": "food",
     "price": 15000,
     "orig": null,
     "badge": "",
@@ -831,7 +831,7 @@
   {
     "id": "snack-sandwich-chicken",
     "title": "Sandwich Chicken Tartar",
-    "cat": "snack",
+    "cat": "food",
     "price": 23000,
     "orig": null,
     "badge": "",
@@ -844,7 +844,7 @@
   {
     "id": "snack-sandwich-beef",
     "title": "Sandwich Smoked Beef & Cheese",
-    "cat": "snack",
+    "cat": "food",
     "price": 23000,
     "orig": null,
     "badge": "",
@@ -857,7 +857,7 @@
   {
     "id": "snack-salt-bread",
     "title": "Salt Bread Original",
-    "cat": "snack",
+    "cat": "food",
     "price": 19000,
     "orig": null,
     "badge": "",
@@ -883,7 +883,7 @@
   {
     "id": "promo-3-roti",
     "title": "Promo 3 Roti Diskon 15%",
-    "cat": "snack",
+    "cat": "food",
     "price": 22950,
     "orig": null,
     "badge": "Promo Spesial",
@@ -896,7 +896,7 @@
   {
     "id": "promo-black-aren-americano",
     "title": "Promo 2 Kopi Susu Black Aren + 1 Americano",
-    "cat": "coffee",
+    "cat": "noncoffee",
     "price": 47000,
     "orig": null,
     "badge": "Promo Spesial",
@@ -948,7 +948,7 @@
   {
     "id": "promo-sweet-toast",
     "title": "Promo 2 Sweet Toast",
-    "cat": "snack",
+    "cat": "toast",
     "price": 35000,
     "orig": null,
     "badge": "Promo Spesial",
@@ -961,7 +961,7 @@
   {
     "id": "promo-savory-toast",
     "title": "Promo 2 Savory Toast",
-    "cat": "snack",
+    "cat": "toast",
     "price": 45000,
     "orig": null,
     "badge": "Promo Spesial",
@@ -974,7 +974,7 @@
   {
     "id": "promo-pahe1",
     "title": "PaHe 1 — Americano + Food",
-    "cat": "coffee",
+    "cat": "food",
     "price": 22000,
     "orig": null,
     "badge": "Promo Spesial",
@@ -987,7 +987,7 @@
   {
     "id": "promo-pahe2",
     "title": "PaHe 2 — Kopi Kenangan Mantan + Food",
-    "cat": "coffee",
+    "cat": "food",
     "price": 30000,
     "orig": null,
     "badge": "Promo Spesial",
@@ -1000,7 +1000,7 @@
   {
     "id": "promo-pahe3",
     "title": "PaHe 3 — Milo Dinosaurus + Food",
-    "cat": "noncoffee",
+    "cat": "food",
     "price": 29000,
     "orig": null,
     "badge": "Promo Spesial",

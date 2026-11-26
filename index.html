@@ -1823,7 +1823,7 @@
         supabaseClient.from('store_settings').select('*').eq('id', 1).maybeSingle()
       ]);
       const failure = catResult.error || productResult.error || settingsResult.error;
-      if (failure) throw failure;
+      if (failure) console.warn('Data bersama Supabase belum lengkap; tampilan memakai data cadangan lokal:', failure);
       // Pulihkan kategori default yang mungkin belum tersimpan di database.
       const categoryMap = new Map((INITIAL_CATEGORIES || []).map(c => [String(c.id), { id: c.id, name: c.name }]));
       (catResult.data || []).filter(c => c.id !== 'digital' && !/voucher/i.test(c.name || '')).forEach(c => categoryMap.set(String(c.id), { id: c.id, name: c.name }));
@@ -1853,6 +1853,12 @@
           console.warn('Backup katalog belum dapat dimuat:', backupError);
         }
       }
+      // Jika katalog bersama kosong/tidak lengkap atau backup JSON gagal dimuat,
+      // gunakan produk Kopi Kenangan yang sudah tertanam di versi pemulihan.
+      (Array.isArray(INITIAL_PRODUCTS) ? INITIAL_PRODUCTS : []).filter(p => p.cat !== 'digital' && !/voucher|netflix|fore coffee|^1x\\s/i.test(p.title || '')).forEach(p => {
+        const key = String(p.id);
+        if (!productMap.has(key)) productMap.set(key, { ...p });
+      });
       products = Array.from(productMap.values()).filter(p => p.cat !== 'digital' && !/voucher|netflix|fore coffee|^1x\\s/i.test(p.title || ''));
       if (settingsResult.data) {
         const settings = settingsResult.data;

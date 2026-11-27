@@ -2738,7 +2738,7 @@
       if(!name||!address)return alert('Nama gerai dan alamat wajib diisi.');
       const previousOutlets = Array.isArray(uiSettings.outlets) ? [...uiSettings.outlets] : [];
       const outlets=[...previousOutlets], i=Number(document.getElementById('adminOutletEditIndex').value);
-      if(i>=0&&i<outlets.length){ markOutletSeedSuppressed(outlets[i].name); outlets[i]={...outlets[i],name,address,note,wifiPassword}; }else outlets.push({name,address,note,wifiPassword});
+      if(i>=0&&i<outlets.length){ markOutletSeedSuppressed(outlets[i].name); markOutletSeedSuppressed(name); outlets[i]={...outlets[i],name,address,note,wifiPassword}; }else outlets.push({name,address,note,wifiPassword});
       uiSettings.outlets=outlets;
       try {
         const { data: userResult, error: userError } = await supabaseClient.auth.getUser();
